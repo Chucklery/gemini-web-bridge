@@ -7,7 +7,7 @@
 1. 用户不再手工复制 `SID`、`SAPISID`、`APISID` 到 `.env`；应用通过一个可见、持久化、由本机用户控制的浏览器登录窗口获取 Gemini 登录态。
 2. 将本项目的 OpenAI Responses 流式接口补齐为 Codex 可稳定消费的 SSE，实现心跳、取消、终态和安全重放，避免本地桥接引起 `Reconnecting`。
 
-推荐实现是“系统浏览器的项目专用 Profile 拥有登录态，服务只持有短生命周期 Cookie 快照”。认证辅助器使用 `playwright-core`，不下载或随应用打包 Chromium；它只在首次登录、启动恢复、认证失效或手动刷新时短暂启动本机 Chrome/Edge，完成后立即退出：
+推荐实现是“系统浏览器的项目专用 Profile 拥有登录态，服务使用经过校验的本地认证状态快照”。认证辅助器使用 `playwright-core`，不下载或随应用打包 Chromium；它只在首次登录、认证失效或手动刷新时短暂启动本机 Chrome/Edge，完成后立即退出：
 
 ```text
 用户在项目启动的系统 Chrome/Edge 窗口登录 Google
@@ -175,7 +175,7 @@ export interface CookieSource {
 ## 7. 安全约束
 
 - Cookie 是完整登录凭据，任何日志、trace、异常、快照测试和 HTTP 响应都不得包含 Cookie value。
-- 默认不把导出的 Cookie 另存 JSON；持久化职责只属于项目专用浏览器 Profile。服务重启时通过短生命周期 Context 重新获取。
+- 登录成功后将经过校验的 Cookie 快照原子写入项目专用 Profile 目录中的 `gemini-auth-state.json`，目录使用 0700、文件使用 0600。服务重启时优先读取该状态文件；只有状态缺失、失效或显式恢复时才启动浏览器。
 - 浏览器启动参数、Profile 路径和 executable path 只来自本机配置，不能由 HTTP 请求控制；运行前解析并校验为明确的本地文件或目录。
 - 若认证辅助器以后拆成子进程，父子进程协议必须版本化并走私有 stdio/IPC，结果只包含 Cookie allowlist，不导出账号密码或本地存储全集。
 - Profile 目录、诊断包和 `.env` 必须加入 `.gitignore`；诊断输出只允许 `present/expired/domain/revision` 等元数据。

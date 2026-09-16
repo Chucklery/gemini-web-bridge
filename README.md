@@ -1,33 +1,37 @@
 # Gemini Web Bridge
 
-将 Gemini Web 会话封装为兼容 OpenAI、Anthropic 和 Google Generative Language API 的本地 HTTP 服务。
+Turn a Gemini Web session into a local HTTP service compatible with OpenAI, Anthropic, and Google Generative Language API clients.
+
+**Documentation:** English (this file) · [简体中文](README.zh-CN.md)
 
 > [!WARNING]
-> 本项目通过 Gemini Web 会话工作，不是 Google 官方 API，也不代表 Google。请遵守适用的 Google 服务条款、组织策略和所在地法律。登录 Cookie 等同于账号凭据，严禁提交到 Git、公开日志或第三方服务。
+> This project uses the private Gemini Web session, not the official Google API, and is not affiliated with Google. Follow applicable Google terms, organizational policies, and local laws. Login cookies are account credentials: never commit or expose them.
 
-## 当前状态
+## Status
 
-项目处于早期开发阶段，适合本地实验和二次开发。当前已支持：
+The project is intended for local experiments and development. It currently supports:
 
-- Node.js 24+、TypeScript、Fastify。
-- Gemini Web Cookie 会话和代理配置。
-- OpenAI Chat Completions、Responses、Models 接口。
-- Anthropic Messages、Count Tokens 接口。
-- Google `generateContent` 兼容接口。
-- 流式 SSE、心跳、客户端取消传播、确定终态和短 TTL 请求事件重放。
-- 多账户池的基础抽象和按账户串行执行。
-- 使用系统 Chrome/Edge 独立 Profile 的可选浏览器登录认证。
+- Node.js 24+, TypeScript, and Fastify.
+- Gemini Web Cookie sessions and proxy configuration.
+- OpenAI Chat Completions, Responses, and Models endpoints.
+- Anthropic Messages and Count Tokens endpoints.
+- Google `generateContent` compatibility endpoint.
+- Streaming SSE, heartbeats, cancellation propagation, definite terminal states, and short-TTL event replay.
+- A basic multi-account pool abstraction with per-account serialization.
+- Optional login and recovery through an isolated system Chrome/Edge profile.
 
-暂不支持：图像生成、官方 Gemini API Key 和完整多账户 CLI。图像接口会返回 `501 Not Implemented`。浏览器认证不下载 Chromium，也不会读取日常浏览器 Profile。
+The browser is used only during initial setup or explicit authentication recovery. After a successful setup, the service reads the local auth state file and sends Gemini Web requests over HTTP; normal startup and requests do not launch a browser or execute frontend scripts.
 
-## 快速开始
+Not supported yet: image generation, the official Gemini API key, and the complete multi-account CLI. Image endpoints return `501 Not Implemented`. Browser authentication does not download Chromium or read the daily browser profile.
 
-### 环境要求
+## Quick start
 
-- Node.js 24 或更高版本
-- 一个 Google 账号；浏览器模式会在项目专用窗口中完成登录
+### Requirements
 
-### 安装和配置
+- Node.js 24 or newer
+- A Google account; browser mode opens an isolated project-owned window for login
+
+### Install and configure
 
 ```bash
 git clone <your-fork-url>
@@ -36,7 +40,7 @@ npm install
 cp .env.example .env
 ```
 
-编辑 `.env`。默认 `auto` 模式会使用项目专用的系统 Chrome/Edge Profile：
+Edit `.env`. The default `auto` mode uses an isolated system Chrome/Edge profile:
 
 ```dotenv
 GEMINI_AUTH_MODE=auto
@@ -44,7 +48,15 @@ GEMINI_AUTH_PROFILE=default
 GEMINI_BROWSER_CHANNEL=auto
 ```
 
-首次启动或执行 `npm run auth -- login` 时，在可见窗口中完成登录。服务只在内存中保留经过 allowlist 校验的 Cookie 快照。找不到受支持浏览器时，显式切换到 `env` 兼容模式：
+Run the login command once and complete sign-in in the visible window:
+
+```bash
+npm run auth -- login
+```
+
+The validated Cookie snapshot is saved as `gemini-auth-state.json` inside the account's private auth profile directory (`~/.gemini-web-bridge/browser-profiles/<hashed-account-id>/` by default). The file is created with owner-only permissions and is used on later service starts. `npm run auth -- refresh` explicitly reopens the browser to recover the session.
+
+If no supported browser is available, explicitly use the compatibility `env` mode:
 
 ```dotenv
 HOST=127.0.0.1
@@ -55,16 +67,16 @@ GEMINI_PROXY=
 GEMINI_COOKIES='[{"name":"SID","value":"...","domain":".google.com","path":"/"},{"name":"SAPISID","value":"...","domain":".google.com","path":"/"},{"name":"APISID","value":"...","domain":".google.com","path":"/"}]'
 ```
 
-Cookie 必须使用真实的 `domain`、`path`、`secure`、`httpOnly` 和过期信息；不要照抄示例中的占位值。服务不会把 Cookie 写入独立 JSON 文件，而是在进程内使用 Cookie Jar。
+Cookies must use their real `domain`, `path`, `secure`, `httpOnly`, and expiry attributes. Do not copy placeholder values. The `env` mode is an explicit rescue mode and keeps credentials in the process only.
 
-### 启动
+### Start
 
 ```bash
 npm run build
 npm start
 ```
 
-检查服务：
+Check the service:
 
 ```bash
 curl http://127.0.0.1:8787/health
@@ -72,7 +84,7 @@ curl -H 'Authorization: Bearer change-this-local-key' \
   http://127.0.0.1:8787/v1/models
 ```
 
-也可以查看当前配置摘要，或生成 Codex 的 Responses Provider 配置：
+You can also inspect auth status or generate a Codex Responses provider configuration:
 
 ```bash
 npm run setup
@@ -80,9 +92,9 @@ npm run setup -- codex
 npm run auth -- status
 ```
 
-## API 使用
+## API usage
 
-当 `API_KEY` 非空时，除 `/health` 外的接口需要发送：
+When `API_KEY` is non-empty, all endpoints except `/health` require:
 
 ```http
 Authorization: Bearer <API_KEY>
@@ -114,54 +126,53 @@ curl http://127.0.0.1:8787/v1/responses \
   }'
 ```
 
-### 兼容接口
+### Compatibility endpoints
 
-| 接口 | 路径 | 状态 |
+| Interface | Path | Status |
 | --- | --- | --- |
-| OpenAI Models | `GET /v1/models` | 支持 |
-| OpenAI Chat Completions | `POST /v1/chat/completions` | 支持，含 SSE |
-| OpenAI Responses | `POST /v1/responses` | 支持，含 SSE |
-| Anthropic Messages | `POST /v1/messages` | 支持 |
-| Anthropic Count Tokens | `POST /v1/messages/count_tokens` | 基础估算 |
-| Google Generate Content | `POST /v1beta/models/:model:generateContent` | 支持 |
-| OpenAI Images | `POST /v1/images/generations` | 暂不支持，返回 501 |
-| Health | `GET /health` | 不要求 API key |
+| OpenAI Models | `GET /v1/models` | Supported |
+| OpenAI Chat Completions | `POST /v1/chat/completions` | Supported, including SSE |
+| OpenAI Responses | `POST /v1/responses` | Supported, including SSE |
+| Anthropic Messages | `POST /v1/messages` | Supported |
+| Anthropic Count Tokens | `POST /v1/messages/count_tokens` | Basic estimate |
+| Google Generate Content | `POST /v1beta/models/:model:generateContent` | Supported |
+| OpenAI Images | `POST /v1/images/generations` | Not supported; returns 501 |
+| Health | `GET /health` | No API key required |
 
-协议兼容不等于行为完全一致。Gemini Web 的模型名、上下文能力、限流、错误和安全策略可能随 Google 服务变化；生产集成前请建立自己的契约测试。
+Protocol compatibility does not guarantee identical behavior. Gemini Web model names, context limits, rate limits, errors, and safety policies can change; create your own contract tests before production integration.
 
-## 配置参考
+## Configuration reference
 
-| 变量 | 默认值 | 说明 |
+| Variable | Default | Description |
 | --- | --- | --- |
-| `HOST` | `127.0.0.1` | 监听地址；公开部署前请配置反向代理和访问控制 |
-| `PORT` | `8787` | 监听端口 |
-| `API_KEY` | 空 | 非空时保护兼容 API 接口 |
-| `GEMINI_AUTH_MODE` | `auto` | `browser`/`auto` 使用独立系统浏览器 Profile；`env` 启用兼容 Cookie 模式 |
-| `GEMINI_COOKIES` | 空 | Cookie JSON 数组；仅用于兼容模式 |
-| `GEMINI_PROXY` | 空 | HTTP/HTTPS 代理地址 |
-| `GEMINI_AUTH_PROFILE` | `default` | 本地随机化 Profile 目录的账户标识 |
-| `GEMINI_AUTH_TIMEOUT_MS` | `120000` | 浏览器登录和恢复超时 |
-| `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`、`chrome` 或 `msedge` |
-| `GEMINI_BROWSER_EXECUTABLE_PATH` | 空 | 自动探测失败时的本地浏览器路径 |
-| `GEMINI_BROWSER_HEADLESS_RECOVERY` | `true` | 先尝试无头恢复，需交互时切换可见窗口 |
-| `GEMINI_AUTH_DATA_DIR` | 空 | 浏览器 Profile 根目录；不应放入仓库 |
-| `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | Cookie 刷新提前量配置 |
-| `GEMINI_SSE_HEARTBEAT_MS` | `2000` | SSE 心跳配置 |
-| `GEMINI_STREAM_STALL_TIMEOUT_MS` | `120000` | 上游无进展时的最大执行时间 |
-| `GEMINI_REPLAY_TTL_MS` | `900000` | 同一 `x-request-id` 的事件重放 TTL |
+| `HOST` | `127.0.0.1` | Listen address; use a reverse proxy and access control before public deployment |
+| `PORT` | `8787` | Listen port |
+| `API_KEY` | empty | Protect compatibility API routes when non-empty |
+| `GEMINI_AUTH_MODE` | `auto` | `auto`/`browser` use the isolated auth profile; `env` enables compatibility Cookie mode |
+| `GEMINI_COOKIES` | empty | JSON Cookie array; explicit compatibility mode only |
+| `GEMINI_PROXY` | empty | HTTP/HTTPS proxy |
+| `GEMINI_AUTH_PROFILE` | `default` | Local account identifier used to derive the isolated profile path |
+| `GEMINI_AUTH_TIMEOUT_MS` | `120000` | Browser setup and recovery timeout |
+| `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`, `chrome`, or `msedge` |
+| `GEMINI_BROWSER_EXECUTABLE_PATH` | empty | Local browser path override |
+| `GEMINI_BROWSER_HEADLESS_RECOVERY` | `true` | Try headless recovery before showing a window |
+| `GEMINI_AUTH_DATA_DIR` | empty | Auth profile root; keep it outside the repository |
+| `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | Cookie refresh lead time |
+| `GEMINI_SSE_HEARTBEAT_MS` | `2000` | SSE heartbeat interval |
+| `GEMINI_STREAM_STALL_TIMEOUT_MS` | `120000` | Maximum execution time without upstream progress |
+| `GEMINI_REPLAY_TTL_MS` | `900000` | Replay TTL for the same `x-request-id` |
 
-如需对外监听，不建议直接将服务绑定到公网。至少应使用 HTTPS、强随机 API key、反向代理访问控制和合理的请求限流。
+Do not bind the service directly to the public Internet. Use HTTPS, a strong random API key, reverse-proxy access control, and request rate limits.
 
-## 安全说明
+## Security
 
-- Cookie 是完整登录凭据，出现泄露时应立即在 Google 账号侧注销相关会话。
-- 不要将 `.env`、Cookie、代理认证信息或请求正文提交到仓库。
-- 不要把服务绑定到 `0.0.0.0` 后直接暴露互联网。
-- 日志、错误报告、截图和诊断包不得包含 Cookie value 或 API key。
-- 认证 Cookie 应使用原始作用域；不要为了“方便”把所有 Cookie 改成任意 domain。
-- 项目不读取用户日常浏览器 Profile，也不自动填写 Google 账号、密码、验证码或 Passkey。
+- Cookies are complete login credentials; revoke the session in Google account security if they leak.
+- Never commit `.env`, auth state, cookies, proxy credentials, request bodies, or API keys.
+- Do not expose the service directly to the Internet.
+- Logs, errors, screenshots, and diagnostics must not contain cookie values or API keys.
+- The project does not read a user's daily browser profile or fill passwords, verification codes, or passkeys.
 
-## 开发
+## Development
 
 ```bash
 npm install
@@ -170,40 +181,44 @@ npm test
 npm run test:watch
 ```
 
-主要目录：
+Main directories:
 
 ```text
-src/auth/       Cookie、认证策略和会话管理
-src/accounts/   账户、租约和账户池
-src/gemini/     Gemini Web 协议、请求和响应解析
-src/transport/  Undici/Fingerprint 传输边界
-src/server/     Fastify 应用、路由和 SSE
-tests/          单元测试与接口测试
-docs/           架构和开发方案
+src/auth/       Cookies, auth policies, and session management
+src/accounts/   Accounts, leases, and account pool
+src/gemini/     Gemini Web protocol, requests, and response parsing
+src/transport/  Undici/fingerprint transport boundary
+src/server/     Fastify app, routes, and SSE
+tests/          Unit and API tests
+docs/           Architecture and development documentation
 ```
 
-提交修改前请运行 `npm run build` 和 `npm test`。涉及流式协议、认证或凭据处理的改动，应同时补充失败、取消和脱敏测试。
+Before submitting changes, run `npm run build` and `npm test`. Streaming, authentication, and credential changes should include failure, cancellation, and redaction tests.
 
-## 贡献
+## Contributing
 
-欢迎提交 Issue 和 Pull Request。建议在 Issue 中包含：Node.js 版本、操作系统、脱敏后的配置摘要、复现步骤和相关日志；不要上传 Cookie、API key、账号邮箱、请求正文或浏览器 Profile。
+Issues and pull requests are welcome. Include the Node.js version, operating system, redacted configuration summary, reproduction steps, and relevant logs; never upload cookies, API keys, account emails, request bodies, or browser profiles.
 
-提交 PR 前请确认：
+Before submitting a pull request, confirm:
 
-1. 改动有对应测试或说明为什么无法测试。
-2. 不引入凭据泄露、任意页面自动化或外部调试端口。
-3. 不把 Chromium、Electron 或用户浏览器 Profile 作为核心运行时依赖。
-4. 文档中的功能状态与实际代码一致。
+1. Add corresponding tests or explain why testing is not possible.
+2. Do not introduce credential leaks, arbitrary page automation, or external debug ports.
+3. Do not make Chromium, Electron, or a user's browser profile a core runtime dependency.
+4. Keep documented feature status aligned with the code.
 
-## 许可证
+## License
 
-当前仓库尚未声明开源许可证。若要公开发布，请在根目录添加 `LICENSE`，并在本节明确许可证名称和版权归属；在此之前，不应默认将代码视为可自由复制、修改或分发。
+This repository has not declared an open-source license. Before public distribution, add a `LICENSE` file and state the license and copyright ownership; until then, do not assume the code may be freely copied, modified, or redistributed.
 
-## 相关文档
+## Documentation
 
-- [开发者文档站](https://chucklery.github.io/gemini-web-bridge/)
-- 本地预览：`npm run docs:dev`
-- 本地构建：`npm run docs:build`
+- [Developer documentation site](https://chucklery.github.io/gemini-web-bridge/)
+- Local preview: `npm run docs:dev`
+- Local build: `npm run docs:build`
 
-- [自动 Gemini Cookie 认证与 Codex 断线治理开发方案](docs/automatic-gemini-cookie-auth-development-plan.md)
-- [架构评审与迁移方案](docs/architecture-review-and-migration-plan.md)
+- [Authentication lifecycle](docs/architecture/auth-lifecycle.md)
+- [Quick start](docs/guide/quickstart.md)
+- [Authentication guide](docs/guide/authentication.md)
+- [Configuration reference](docs/reference/configuration.md)
+- [Automatic Cookie authentication development plan](docs/automatic-gemini-cookie-auth-development-plan.md)
+- [Architecture review and migration plan](docs/architecture-review-and-migration-plan.md)

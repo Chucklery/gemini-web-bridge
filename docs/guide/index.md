@@ -1,10 +1,12 @@
-# 开始使用
+# Guides
 
-Gemini Web Bridge 的运行时是 Node.js 24+，HTTP 层使用 Fastify，Gemini Web 请求通过 Undici transport 发出。认证默认使用本机 Chrome/Edge 的项目专用 Profile。
+Gemini Web Bridge runs on Node.js 24+ and sends Gemini Web requests through the Undici HTTP transport.
 
-推荐阅读顺序：
+Recommended reading order:
 
-1. [快速开始](./quickstart)
-2. [认证流程](./authentication)
-3. [调用兼容 API](./api-usage)
-4. [故障排查](./troubleshooting)
+1. [Quick start](./quickstart)
+2. [Authentication](./authentication)
+3. [API usage](./api-usage)
+4. [Troubleshooting](./troubleshooting)
+
+The browser is a setup and recovery tool, not a runtime dependency. After login, the service uses the saved auth state and does not launch a browser during normal requests.

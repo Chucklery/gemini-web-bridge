@@ -1,21 +1,27 @@
-# 环境变量
+# Configuration
 
-| 变量 | 默认值 | 说明 |
+| Variable | Default | Description |
 | --- | --- | --- |
-| `HOST` | `127.0.0.1` | 监听地址 |
-| `PORT` | `8787` | 监听端口 |
-| `API_KEY` | 空 | 非空时保护兼容 API |
-| `GEMINI_AUTH_MODE` | `auto` | `auto`、`browser` 或 `env` |
-| `GEMINI_COOKIES` | 空 | env 模式下的 Cookie JSON |
-| `GEMINI_AUTH_PROFILE` | `default` | 项目 Profile 标识 |
-| `GEMINI_AUTH_TIMEOUT_MS` | `120000` | 登录/恢复超时 |
-| `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`、`chrome` 或 `msedge` |
-| `GEMINI_BROWSER_EXECUTABLE_PATH` | 空 | 浏览器路径高级配置 |
-| `GEMINI_BROWSER_HEADLESS_RECOVERY` | `true` | 是否先尝试无头恢复 |
-| `GEMINI_AUTH_DATA_DIR` | 空 | Profile 根目录，不应在仓库内 |
-| `GEMINI_PROXY` | 空 | HTTP/HTTPS 代理 |
-| `GEMINI_SSE_HEARTBEAT_MS` | `2000` | SSE 心跳间隔 |
-| `GEMINI_STREAM_STALL_TIMEOUT_MS` | `120000` | 上游无进展最大时长 |
-| `GEMINI_REPLAY_TTL_MS` | `900000` | 请求事件重放 TTL |
+| HOST | 127.0.0.1 | Listen address |
+| PORT | 8787 | Listen port |
+| API_KEY | empty | Protect compatible API routes when non-empty |
+| GEMINI_AUTH_MODE | auto | auto/browser use the isolated auth profile; env uses compatibility Cookie mode |
+| GEMINI_COOKIES | empty | JSON cookie array for explicit env mode |
+| GEMINI_AUTH_PROFILE | default | Account identifier used to derive the isolated profile path |
+| GEMINI_AUTH_TIMEOUT_MS | 120000 | Browser setup/recovery timeout |
+| GEMINI_BROWSER_CHANNEL | auto | auto, chrome, or msedge |
+| GEMINI_BROWSER_EXECUTABLE_PATH | empty | Browser path override |
+| GEMINI_BROWSER_HEADLESS_RECOVERY | true | Try headless recovery before showing a window |
+| GEMINI_AUTH_DATA_DIR | empty | Root directory for the isolated profile and auth state |
+| GEMINI_PROXY | empty | HTTP/HTTPS proxy |
+| GEMINI_SSE_HEARTBEAT_MS | 2000 | SSE heartbeat interval |
+| GEMINI_STREAM_STALL_TIMEOUT_MS | 120000 | Maximum upstream stall time |
+| GEMINI_REPLAY_TTL_MS | 900000 | Event replay TTL |
 
-完整配置校验见 [`src/config/env.ts`](https://github.com/Chucklery/gemini-web-bridge/blob/main/src/config/env.ts)。
+The default auth state path is:
+
+```text
+~/.gemini-web-bridge/browser-profiles/<hashed-account-id>/gemini-auth-state.json
+```
+
+Keep this directory outside the repository and treat it as a credential store.

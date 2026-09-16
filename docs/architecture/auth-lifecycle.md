@@ -1,17 +1,23 @@
-# 认证与 Cookie 生命周期
+# Authentication and Cookie lifecycle
 
-认证的核心是让浏览器拥有持久化登录态，让服务只拥有短生命周期的、经过 allowlist 校验的 Cookie 快照：
+The browser owns the durable login session. The service owns only a validated, local auth-state snapshot:
 
 ```text
-Profile → browserContext.cookies(url) → CookiePolicy → SessionManager
-                                                   ↓
-                                      原子替换 GeminiCookies/Client
+Browser setup/recovery → CookiePolicy → gemini-auth-state.json
+                                      ↓
+                         FileCookieSource → CookieJar → HTTP transport
 ```
 
-启动时由 `CookieSource.current()` 取得快照；认证失效、临近过期或手动刷新时由 `refresh(reason)` 生成新快照。刷新成功并通过 bootstrap 验证后才替换当前客户端，避免把正在执行的请求切换到半更新状态。
+After `auth login` succeeds, the state is saved under the account's isolated profile directory. On normal startup, `BrowserCookieSource.current()` first loads this file; it does not launch a browser. The Gemini client then performs bootstrap, model discovery, and generation using HTTP requests only.
 
-`SessionManager` 负责 single-flight：并发请求只触发一次刷新。账户状态按 `ready`、`refreshing`、`auth_required` 等阶段变化；认证失败不会悄悄降级到匿名请求。
+The browser is opened only when the state file is missing or expired, when the user runs `npm run auth -- refresh`, or when authentication recovery is explicitly required. A successful recovery atomically replaces the state file and the in-memory CookieJar.
 
-## 为什么不读取日常浏览器
+`SessionManager` provides single-flight refresh behavior. Concurrent requests share one refresh, and an active request keeps its current client while a replacement session is validated. Authentication failures never silently downgrade to anonymous requests.
 
-读取 Cookie 数据库、接管现有浏览器或开放 CDP 端口会扩大凭据暴露面并制造跨平台锁/版本问题。项目专用 Profile 可明确登录态所有权、账号隔离和登出边界。
+## State file
+
+The file is `gemini-auth-state.json` inside the hashed account profile directory. It contains only the validated Gemini cookie snapshot, uses owner-only permissions (`0700` directory, `0600` file), and is written through a temporary file followed by rename. Treat it as a login credential: do not commit, log, copy, or upload it.
+
+## Why not use the daily browser profile?
+
+Reading a daily browser database, attaching to an existing browser, or exposing a CDP port increases credential exposure and creates profile-lock and version problems. A project-owned profile gives the auth state a clear owner, account isolation, and logout boundary.

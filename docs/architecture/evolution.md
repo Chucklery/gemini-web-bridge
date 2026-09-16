@@ -1,21 +1,13 @@
-# 演进路线
+# Evolution
 
-长期目标是让兼容协议与上游 Provider 独立演进：
+The long-term goal is to let compatibility protocols and upstream providers evolve independently.
 
-```text
-OpenAI / Anthropic / Google
-             ↓ mapper
-      Canonical Generation IR
-             ↓
- Gemini Web / ChatGPT Web / Claude Web
-```
+Recommended sequence:
 
-推荐按阶段推进：
+1. Freeze current behavior with RPC, model, stream, cancellation, and error fixtures.
+2. Stabilize shared request, event, model, and error contracts.
+3. Move model resolution, account selection, calls, and retries into an application service.
+4. Separate HTTP schemas, mappers, and response encoders.
+5. Generalize account and model registration for additional providers.
 
-1. 冻结当前行为：补齐 RPC、模型、流式、取消和错误 fixture。
-2. 引入 `core` 请求、事件、模型和错误契约，用 Gemini 包装现有实现。
-3. 让统一 `GenerationService` 承担模型解析、调度和重试，路由不再直接接触 `AccountPool`。
-4. 拆分各 HTTP 协议的 schema、mapper 与 encoder。
-5. 泛化账户池的 Provider、并发容量、冷却和模型注册。
-
-不要提前抽象未知 Provider 的私有 Web RPC、Cookie 字段或会话 ID；先稳定 `ProviderClient`、`GenerationRequest`、`GenerationEvent`、`ProviderError` 和 `ModelRegistry` 边界。
+Do not abstract unknown private Web RPCs, cookie fields, or session IDs before their contracts are understood.
