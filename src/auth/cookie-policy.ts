@@ -16,3 +16,11 @@ export function validateCookies(cookies: StoredCookie[], now = Date.now()): void
     if (cookie.expires !== undefined && cookie.expires * 1000 <= now) throw new CookiePolicyError(`Cookie is expired: ${cookie.name}`);
   }
 }
+
+export function cookiesForGemini(cookies: StoredCookie[], now = Date.now()): StoredCookie[] {
+  validateCookies(cookies, now);
+  return cookies.filter(cookie => {
+    const domain = (cookie.domain ?? 'gemini.google.com').replace(/^\./, '').toLowerCase();
+    return domain === 'google.com' || domain.endsWith('.google.com');
+  }).map(cookie => ({ ...cookie }));
+}

@@ -3,10 +3,16 @@ import { createApp } from '../src/server/app.js';
 import { loadConfig } from '../src/config/env.js';
 import { accountFromCookies } from '../src/accounts/factory.js';
 import { AccountPool } from '../src/accounts/pool.js';
+import { EnvCookieSource } from '../src/auth/env-cookie-source.js';
+import { BrowserCookieSource } from '../src/auth/browser-cookie-source.js';
+import { SessionManager } from '../src/auth/session-manager.js';
 loadEnvFile();
 const config=loadConfig();
-const raw=config.GEMINI_COOKIES ? JSON.parse(config.GEMINI_COOKIES) as unknown : [];
-const cookies=Array.isArray(raw) ? raw as {name:string;value:string;domain?:string;path?:string}[] : [];
-const pool=cookies.length ? new AccountPool([await accountFromCookies('default',cookies,config.GEMINI_PROXY)]) : undefined;
+const source = config.GEMINI_AUTH_MODE === 'env'
+  ? new EnvCookieSource(config.GEMINI_COOKIES)
+  : new BrowserCookieSource({ accountId: config.GEMINI_AUTH_PROFILE, profileRoot: config.GEMINI_AUTH_DATA_DIR || undefined, channel: config.GEMINI_BROWSER_CHANNEL, executablePath: config.GEMINI_BROWSER_EXECUTABLE_PATH || undefined, timeoutMs: config.GEMINI_AUTH_TIMEOUT_MS, headlessRecovery: config.GEMINI_BROWSER_HEADLESS_RECOVERY });
+let pool: AccountPool | undefined;
+try { const manager = new SessionManager(source); const session = await manager.current(); const account = await accountFromCookies('default',session.snapshot.cookies,config.GEMINI_PROXY); account.refresh = async () => (await accountFromCookies('default',(await manager.refresh('unauthorized')).snapshot.cookies,config.GEMINI_PROXY)).client; pool = new AccountPool([account]); }
+catch (error) { console.error(error instanceof Error ? error.message : 'Gemini authentication failed'); process.exitCode = 1; }
 const app=createApp(pool);
-await app.listen({host:config.HOST,port:config.PORT});
+if (pool) await app.listen({host:config.HOST,port:config.PORT});

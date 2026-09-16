@@ -1,0 +1,5 @@
+import type { BrowserContext, BrowserPage } from './persistent-context.js';
+const ALLOWED = ['https://gemini.google.com', 'https://accounts.google.com'];
+function allowed(url: string): boolean { return ALLOWED.some(prefix => url === prefix || url.startsWith(`${prefix}/`)); }
+export async function prepareLogin(context: BrowserContext, timeout: number): Promise<BrowserPage> { const page = context.pages()[0] ?? await context.newPage(); await page.goto('https://gemini.google.com/app', { waitUntil: 'domcontentloaded', timeout }); if (!allowed(page.url())) throw new Error('Browser authentication navigated outside allowed Google domains'); return page; }
+export async function waitForGeminiLogin(page: BrowserPage, timeout: number, ready?: () => Promise<boolean>): Promise<void> { const deadline = Date.now() + timeout; while (Date.now() < deadline) { if (allowed(page.url()) && page.url().includes('gemini.google.com') && (!ready || await ready())) return; await page.waitForTimeout(500); } throw new Error('Timed out waiting for Gemini login'); }

@@ -8,3 +8,6 @@
 .env
 node_modules
 dist
+
+# private browser authentication state
+.gemini-web-bridge/

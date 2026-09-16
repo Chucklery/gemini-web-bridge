@@ -23,7 +23,7 @@ export class GeminiClient {
     if (response.status !== 200) throw new GeminiProtocolError(`Gemini bootstrap returned HTTP ${response.status}`, response.status, response.status >= 500);
     const value = (pattern: RegExp) => { const match = html.match(pattern); return match?.slice(1).find(Boolean) ?? ''; };
     const bootstrap = { snlM0e: value(/"SNlM0e":"([^"]+)"/), bl: value(/"bl":"([^"]+)"|data-bl="([^"]+)"/), fsid: value(/"FdrFJe":"([^"]+)"|"f\.sid":"([^"]+)"/), models: [] };
-    if (!bootstrap.snlM0e || !bootstrap.bl || !bootstrap.fsid) throw new GeminiProtocolError('Gemini bootstrap is missing dynamic parameters', undefined, true);
+    if (!bootstrap.snlM0e || !bootstrap.bl || !bootstrap.fsid) throw new GeminiProtocolError('Gemini bootstrap is missing dynamic parameters', html.includes('accounts.google.com') ? 401 : undefined, false);
     const catalog = await this.fetchModels(bootstrap, signal);
     this.bootstrap = { ...bootstrap, models: catalog };
     return this.bootstrap;

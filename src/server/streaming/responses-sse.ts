@@ -20,6 +20,8 @@ export class ResponsesSse {
     });
   }
 
+  get isEnded(): boolean { return this.ended; }
+
   write(event: ResponsesEvent): void {
     if (this.ended) return;
     const value = { sequence_number: this.sequence++, response_id: this.responseId, ...event };
@@ -43,4 +45,5 @@ export class ResponsesSse {
   }
 
   end(): void { if (!this.ended) { this.ended = true; this.reply.raw.end(); } }
+  finishReplay(): void { if (this.ended) return; this.reply.raw.write('data: [DONE]\n\n'); this.end(); }
 }

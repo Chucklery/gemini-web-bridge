@@ -2,6 +2,7 @@ import { request as undiciRequest, type Dispatcher } from 'undici';
 import type { GeminiHttpRequest, GeminiHttpResponse, GeminiTransport, StreamHandler } from './transport.js';
 import type { GeminiCookies } from '../auth/cookies.js';
 import { buildSapisidHash } from '../auth/sapisid.js';
+import { GeminiProtocolError } from '../shared/errors.js';
 
 export interface UndiciTransportOptions { dispatcher?: Dispatcher; cookies?: GeminiCookies; }
 
@@ -42,7 +43,7 @@ export class UndiciTransport implements GeminiTransport {
   async stream(req: GeminiHttpRequest, handler: StreamHandler): Promise<void> {
     const response = await this.request(req);
     if (response.status < 200 || response.status >= 300) {
-      throw new Error(`Gemini upstream returned HTTP ${response.status}`);
+      throw new GeminiProtocolError(`Gemini upstream returned HTTP ${response.status}`, response.status, response.status >= 500);
     }
     for await (const chunk of response.body) await handler(chunk);
   }

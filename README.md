@@ -14,18 +14,18 @@
 - OpenAI Chat Completions、Responses、Models 接口。
 - Anthropic Messages、Count Tokens 接口。
 - Google `generateContent` 兼容接口。
-- 流式 SSE、心跳、客户端取消传播和基本错误终态。
+- 流式 SSE、心跳、客户端取消传播、确定终态和短 TTL 请求事件重放。
 - 多账户池的基础抽象和按账户串行执行。
+- 使用系统 Chrome/Edge 独立 Profile 的可选浏览器登录认证。
 
-暂不支持：图像生成、官方 Gemini API Key、自动浏览器登录、持久化任务重放和完整多账户 CLI。图像接口会返回 `501 Not Implemented`。自动浏览器认证正在按[开发方案](docs/automatic-gemini-cookie-auth-development-plan.md)推进。
+暂不支持：图像生成、官方 Gemini API Key 和完整多账户 CLI。图像接口会返回 `501 Not Implemented`。浏览器认证不下载 Chromium，也不会读取日常浏览器 Profile。
 
 ## 快速开始
 
 ### 环境要求
 
 - Node.js 24 或更高版本
-- 一个已登录 Gemini Web 的 Google 账号
-- 通过浏览器开发者工具导出的 Gemini Cookie JSON（兼容模式）
+- 一个 Google 账号；浏览器模式会在项目专用窗口中完成登录
 
 ### 安装和配置
 
@@ -36,7 +36,15 @@ npm install
 cp .env.example .env
 ```
 
-编辑 `.env`。当前稳定可用的认证方式是 `env` 兼容模式：
+编辑 `.env`。默认 `auto` 模式会使用项目专用的系统 Chrome/Edge Profile：
+
+```dotenv
+GEMINI_AUTH_MODE=auto
+GEMINI_AUTH_PROFILE=default
+GEMINI_BROWSER_CHANNEL=auto
+```
+
+首次启动或执行 `npm run auth -- login` 时，在可见窗口中完成登录。服务只在内存中保留经过 allowlist 校验的 Cookie 快照。找不到受支持浏览器时，显式切换到 `env` 兼容模式：
 
 ```dotenv
 HOST=127.0.0.1
@@ -64,10 +72,12 @@ curl -H 'Authorization: Bearer change-this-local-key' \
   http://127.0.0.1:8787/v1/models
 ```
 
-也可以查看当前配置摘要。该命令只输出是否存在 API key/Cookie，不输出秘密值：
+也可以查看当前配置摘要，或生成 Codex 的 Responses Provider 配置：
 
 ```bash
 npm run setup
+npm run setup -- codex
+npm run auth -- status
 ```
 
 ## API 使用
@@ -126,15 +136,19 @@ curl http://127.0.0.1:8787/v1/responses \
 | `HOST` | `127.0.0.1` | 监听地址；公开部署前请配置反向代理和访问控制 |
 | `PORT` | `8787` | 监听端口 |
 | `API_KEY` | 空 | 非空时保护兼容 API 接口 |
-| `GEMINI_AUTH_MODE` | `auto` | `env` 为当前可用的 Cookie 兼容模式；`browser`/`auto` 的自动登录能力仍在开发 |
+| `GEMINI_AUTH_MODE` | `auto` | `browser`/`auto` 使用独立系统浏览器 Profile；`env` 启用兼容 Cookie 模式 |
 | `GEMINI_COOKIES` | 空 | Cookie JSON 数组；仅用于兼容模式 |
 | `GEMINI_PROXY` | 空 | HTTP/HTTPS 代理地址 |
-| `GEMINI_AUTH_PROFILE` | `default` | 预留的认证 Profile 名称 |
-| `GEMINI_AUTH_TIMEOUT_MS` | `120000` | 预留的认证超时配置 |
-| `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | 预留的 Cookie 刷新提前量 |
+| `GEMINI_AUTH_PROFILE` | `default` | 本地随机化 Profile 目录的账户标识 |
+| `GEMINI_AUTH_TIMEOUT_MS` | `120000` | 浏览器登录和恢复超时 |
+| `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`、`chrome` 或 `msedge` |
+| `GEMINI_BROWSER_EXECUTABLE_PATH` | 空 | 自动探测失败时的本地浏览器路径 |
+| `GEMINI_BROWSER_HEADLESS_RECOVERY` | `true` | 先尝试无头恢复，需交互时切换可见窗口 |
+| `GEMINI_AUTH_DATA_DIR` | 空 | 浏览器 Profile 根目录；不应放入仓库 |
+| `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | Cookie 刷新提前量配置 |
 | `GEMINI_SSE_HEARTBEAT_MS` | `2000` | SSE 心跳配置 |
-| `GEMINI_STREAM_STALL_TIMEOUT_MS` | `120000` | 预留的流停滞超时 |
-| `GEMINI_REPLAY_TTL_MS` | `900000` | 预留的事件重放 TTL |
+| `GEMINI_STREAM_STALL_TIMEOUT_MS` | `120000` | 上游无进展时的最大执行时间 |
+| `GEMINI_REPLAY_TTL_MS` | `900000` | 同一 `x-request-id` 的事件重放 TTL |
 
 如需对外监听，不建议直接将服务绑定到公网。至少应使用 HTTPS、强随机 API key、反向代理访问控制和合理的请求限流。
 

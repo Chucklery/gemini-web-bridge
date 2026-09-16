@@ -13,6 +13,6 @@ export class GeminiCookies {
     this.jar = next;
   }
   getHeader(url: string): Promise<string> { return this.jar.getCookieString(url); }
-  absorb(setCookie: string | string[], url: string): Promise<void> { return this.jar.setCookie(Array.isArray(setCookie) ? setCookie[0] : setCookie, url).then(() => undefined); }
+  async absorb(setCookie: string | string[], url: string): Promise<void> { for (const value of Array.isArray(setCookie) ? setCookie : [setCookie]) await this.jar.setCookie(value, url); }
   snapshot(): Promise<StoredCookie[]> { return this.jar.getCookies('https://gemini.google.com/').then(cookies => cookies.map(cookie => ({ name: cookie.key, value: cookie.value, domain: cookie.domain ?? undefined, path: cookie.path ?? undefined, expires: cookie.expires instanceof Date ? cookie.expires.getTime() / 1000 : undefined, secure: cookie.secure, httpOnly: cookie.httpOnly, sameSite: cookie.sameSite as StoredCookie['sameSite'] }))); }
 }

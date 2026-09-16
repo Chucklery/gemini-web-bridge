@@ -26,9 +26,11 @@ export class SessionManager {
     await next.replace(snapshot.cookies);
     if (this.validate) await this.validate(next, signal);
     const session = { revision: snapshot.revision, cookies: next, snapshot };
-    this.active = session;
-    return session;
+    return this.activate(session);
   }
+
+  private activate(session: AuthenticatedSession): AuthenticatedSession { this.active = session; return session; }
+  invalidate(revision?: string): void { if (!revision || this.active?.revision === revision) this.active = undefined; }
 
   get revision(): string | undefined { return this.active?.revision; }
   async close(): Promise<void> { await this.source.close?.(); this.active = undefined; }
