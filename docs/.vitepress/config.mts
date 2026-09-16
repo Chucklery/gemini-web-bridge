@@ -26,6 +26,9 @@ export default defineConfig({
           { text: '故障排查', link: '/guide/troubleshooting' },
           { text: '贡献者工作流', link: '/guide/contributing' },
         ] },
+        { text: '常用工作流', items: [
+          { text: '从安装到请求', link: '/guide/workflows' },
+        ] },
       ],
       '/architecture/': [
         { text: '系统原理', items: [
