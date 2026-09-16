@@ -155,7 +155,7 @@ Protocol compatibility does not guarantee identical behavior. Gemini Web model n
 | `GEMINI_AUTH_TIMEOUT_MS` | `120000` | Browser setup and recovery timeout |
 | `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`, `chrome`, or `msedge` |
 | `GEMINI_BROWSER_EXECUTABLE_PATH` | empty | Local browser path override |
-| `GEMINI_BROWSER_HEADLESS_RECOVERY` | `true` | Try headless recovery before showing a window |
+| `GEMINI_BROWSER_HEADLESS_RECOVERY` | `false` | Allow a headless recovery attempt before showing a window; Google sign-in may reject it |
 | `GEMINI_AUTH_DATA_DIR` | empty | Auth profile root; keep it outside the repository |
 | `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | Cookie refresh lead time |
 | `GEMINI_SSE_HEARTBEAT_MS` | `2000` | SSE heartbeat interval |
