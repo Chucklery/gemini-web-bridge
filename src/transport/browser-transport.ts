@@ -2,10 +2,11 @@ import { ProxyAgent as LegacyProxyAgent } from 'proxy-agent';
 import { ProxyAgent as UndiciProxyAgent, type Dispatcher } from 'undici';
 import { UndiciTransport } from './undici-transport.js';
 import type { GeminiHttpRequest, GeminiTransport, StreamHandler } from './transport.js';
+import type { GeminiCookies } from '../auth/cookies.js';
 
 export interface BrowserFingerprint {
   browser: 'Chrome' | 'Edge' | 'Firefox'; version: string; platform?: string;
-  userAgent: string; language?: string; proxy?: string;
+  userAgent: string; language?: string; proxy?: string; cookies?: GeminiCookies;
 }
 
 export class FingerprintTransport implements GeminiTransport {
@@ -15,7 +16,7 @@ export class FingerprintTransport implements GeminiTransport {
     // Undici requires its own Dispatcher implementation at runtime.
     void LegacyProxyAgent;
     const selected = dispatcher ?? (fingerprint.proxy ? new UndiciProxyAgent(fingerprint.proxy) : undefined);
-    this.inner = new UndiciTransport({ dispatcher: selected as unknown as Dispatcher });
+    this.inner = new UndiciTransport({ dispatcher: selected as unknown as Dispatcher, cookies: fingerprint.cookies });
   }
   private headers(input?: Record<string, string>): Record<string, string> {
     const headers = { ...(input ?? {}) };

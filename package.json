@@ -6,6 +6,8 @@
   "engines": { "node": ">=24" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli/server.js",
+    "setup": "node dist/cli/setup.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

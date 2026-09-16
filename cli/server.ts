@@ -1,0 +1,10 @@
+import { createApp } from '../src/server/app.js';
+import { loadConfig } from '../src/config/env.js';
+import { accountFromCookies } from '../src/accounts/factory.js';
+import { AccountPool } from '../src/accounts/pool.js';
+const config=loadConfig();
+const raw=config.GEMINI_COOKIES ? JSON.parse(config.GEMINI_COOKIES) as unknown : [];
+const cookies=Array.isArray(raw) ? raw as {name:string;value:string;domain?:string;path?:string}[] : [];
+const pool=cookies.length ? new AccountPool([await accountFromCookies('default',cookies,config.GEMINI_PROXY)]) : undefined;
+const app=createApp(pool);
+await app.listen({host:config.HOST,port:config.PORT});

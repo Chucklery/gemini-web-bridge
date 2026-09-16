@@ -1,1 +1,3 @@
-export { createApp as registerGenerateContent } from '../../app.js';
+import type {FastifyInstance} from 'fastify';import type {AccountPool} from '../../../accounts/pool.js';import {z} from 'zod';import {generate} from '../shared.js';
+const schema=z.object({contents:z.array(z.unknown()).min(1),generationConfig:z.record(z.unknown()).optional()});
+export function registerGenerateContent(app:FastifyInstance,pool?:AccountPool):void{app.post('/v1beta/models/:model\\:generateContent',async(req,reply)=>{const body=schema.parse(req.body);const model=(req.params as {model:string}).model;const text=await generate(pool,JSON.stringify(body.contents),model,reply);return {candidates:[{content:{role:'model',parts:[{text}]},finishReason:'STOP'}]};});}

@@ -1,1 +1,3 @@
-export { createApp as registerResponses } from '../../app.js';
+import type {FastifyInstance} from 'fastify';import type {AccountPool} from '../../../accounts/pool.js';import {z} from 'zod';import {generate} from '../shared.js';
+const schema=z.object({model:z.string().optional(),input:z.union([z.string(),z.array(z.unknown())])});
+export function registerResponses(app:FastifyInstance,pool?:AccountPool):void{app.post('/v1/responses',async(req,reply)=>{const body=schema.parse(req.body);const text=await generate(pool,typeof body.input==='string'?body.input:JSON.stringify(body.input),body.model,reply);return {id:'resp-gemini',object:'response',output:[{type:'message',role:'assistant',content:[{type:'output_text',text}]}]};});}

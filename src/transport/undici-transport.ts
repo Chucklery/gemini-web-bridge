@@ -1,6 +1,7 @@
 import { request as undiciRequest, type Dispatcher } from 'undici';
 import type { GeminiHttpRequest, GeminiHttpResponse, GeminiTransport, StreamHandler } from './transport.js';
 import type { GeminiCookies } from '../auth/cookies.js';
+import { buildSapisidHash } from '../auth/sapisid.js';
 
 export interface UndiciTransportOptions { dispatcher?: Dispatcher; cookies?: GeminiCookies; }
 
@@ -10,9 +11,12 @@ export class UndiciTransport implements GeminiTransport {
   async request(req: GeminiHttpRequest): Promise<GeminiHttpResponse> {
     const url = String(req.url);
     const cookie = this.options.cookies ? await this.options.cookies.getHeader(url) : '';
+    const requestHeaders:Record<string,string>={...(req.headers??{}),...(cookie?{cookie}:{})};
+    const sapisid=cookie.match(/(?:^|;\s*)SAPISID=([^;]+)/)?.[1];
+    if(sapisid){requestHeaders['x-goog-authuser']??='0';requestHeaders['x-same-domain']??='1';requestHeaders['x-sapisid-hash']??=buildSapisidHash(decodeURIComponent(sapisid));}
     const response = await undiciRequest(req.url, {
       method: req.method,
-      headers: { ...(req.headers ?? {}), ...(cookie ? { cookie } : {}) },
+      headers: requestHeaders,
       body: req.body,
       signal: req.signal,
       dispatcher: this.options.dispatcher,

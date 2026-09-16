@@ -4,6 +4,6 @@ export class OpenAIAdapter {
   constructor(private readonly pool: AccountPool) {}
   async complete(input: ChatRequest): Promise<{content:string; model:string}> {
     const prompt=input.messages.map(m=>m.role+': '+contentToText(m.content)).join('\n');
-    return this.pool.run(async account=>{let content=''; await account.client.generate({prompt,model:input.model},e=>{if(e.type==='text')content+=e.text??''}); return {content,model:input.model??'gemini'};});
+    return this.pool.runWithRetry(async account=>{let content=''; await account.client.generate({prompt,model:input.model},e=>{if(e.type==='text')content+=e.text??''}); return {content,model:input.model??'gemini'};});
   }
 }

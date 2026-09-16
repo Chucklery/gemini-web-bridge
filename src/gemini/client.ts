@@ -8,7 +8,8 @@ import { parseModelCatalog } from './models.js';
 
 export interface ConversationSnapshot { cid: string; rid: string; rcid: string; }
 export interface GenerateRequest { prompt: string; model?: string; conversation?: ConversationSnapshot; }
-export interface GeminiEvent { type: 'text' | 'session' | 'done' | 'error'; text?: string; session?: ConversationSnapshot; error?: Error; }
+export interface StatefulGenerateRequest extends Omit<GenerateRequest,'conversation'> { conversation?: ConversationSnapshot | {snapshot():ConversationSnapshot;update(next:Partial<ConversationSnapshot>):void}; }
+export interface GeminiEvent { type: 'text' | 'thought' | 'phase' | 'session' | 'done' | 'error'; text?: string; session?: ConversationSnapshot; phase?: number; error?: Error; }
 
 const APP = 'https://gemini.google.com/app';
 
@@ -38,14 +39,17 @@ export class GeminiClient {
   }
 
   get currentBootstrap(): GeminiBootstrap | undefined { return this.bootstrap; }
+  get models(): GeminiBootstrap['models'] { return this.bootstrap?.models ?? []; }
 
-  async generate(request: GenerateRequest, emit: (event: GeminiEvent) => void, signal?: AbortSignal): Promise<void> {
+  async generate(request: StatefulGenerateRequest, emit: (event: GeminiEvent) => void, signal?: AbortSignal): Promise<void> {
+    const state=request.conversation && 'snapshot' in request.conversation ? request.conversation : undefined;
+    const snapshot=state?.snapshot() ?? request.conversation;
     const bootstrap = this.bootstrap ?? await this.init(signal);
-    const built = new GeminiRequestBuilder().build(bootstrap, request);
+    const built = new GeminiRequestBuilder().build(bootstrap, {...request,conversation:snapshot} as GenerateRequest);
     const parser = new GeminiStreamParser();
     await this.transport.stream({ method: 'POST', url: built.url, headers: { ...this.headers, ...built.headers }, body: built.body, signal }, chunk => {
-      for (const event of parser.push(chunk)) emit(event);
+      for (const event of parser.push(chunk)) { if(state&&event.type==='session')state.update(event.session??{}); emit(event); }
     });
-    for (const event of parser.finish()) emit(event);
+    for (const event of parser.finish()) { if(state&&event.type==='session')state.update(event.session??{}); emit(event); }
   }
 }

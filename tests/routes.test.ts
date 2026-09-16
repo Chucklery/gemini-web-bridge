@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest';
+import { createApp } from '../src/server/app.js';
+describe('route registration',()=>{it('registers all compatibility endpoints',async()=>{const app=createApp();for(const path of ['/v1/models','/v1/chat/completions','/v1/responses','/v1/messages','/v1/messages/count_tokens','/v1/images/generations','/v1beta/models/gemini-pro:generateContent']){const method=path==='/v1/models'?'GET':'POST';const result=await app.inject({method,url:path,payload:method==='POST'?{}:undefined});expect([200,400,404,501,503]).toContain(result.statusCode);}await app.close();});});

@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest';
+import { GeminiStreamParser } from '../src/gemini/stream-parser.js';
+describe('Gemini stream deltas',()=>{it('does not duplicate cumulative snapshots',()=>{const parser=new GeminiStreamParser();const make=(text:string)=>JSON.stringify([['wrb.fr','x',JSON.stringify(Object.assign([], {1:['c','r'],4:[['rc_1',[text],null,null,null,null,null,null,[1,0]]]}))]])+'\n';const first=parser.push(new TextEncoder().encode(make('hello')));const second=parser.push(new TextEncoder().encode(make('hello world')));expect(first.filter(e=>e.type==='text').map(e=>e.text)).toEqual(['hello']);expect(second.filter(e=>e.type==='text').map(e=>e.text)).toEqual([' world']);});});

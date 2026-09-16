@@ -1,1 +1,3 @@
-export { createApp as registerMessages } from '../../app.js';
+import type {FastifyInstance} from 'fastify';import type {AccountPool} from '../../../accounts/pool.js';import {z} from 'zod';import {generate} from '../shared.js';
+const schema=z.object({model:z.string().optional(),messages:z.array(z.object({role:z.string(),content:z.unknown()})).min(1),max_tokens:z.number().int().positive().optional()});
+export function registerAnthropicMessages(app:FastifyInstance,pool?:AccountPool):void{app.post('/v1/messages',async(req,reply)=>{const body=schema.parse(req.body);const text=await generate(pool,JSON.stringify(body.messages),body.model,reply);return {id:'msg-gemini',type:'message',role:'assistant',model:body.model??'gemini',content:[{type:'text',text}],stop_reason:'end_turn'};});}

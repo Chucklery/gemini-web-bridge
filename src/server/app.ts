@@ -1,7 +1,21 @@
 import Fastify, { type FastifyInstance } from 'fastify';
-import { z } from 'zod';
+import { ZodError } from 'zod';
 import type { AccountPool } from '../accounts/pool.js';
 import { requireApiKey } from './middleware/auth.js';
 import { registerErrorHandler } from './middleware/errors.js';
-const schema=z.object({model:z.string().optional(),messages:z.array(z.object({role:z.string(),content:z.unknown()})).min(1),stream:z.boolean().optional()});
-export function createApp(pool?: AccountPool): FastifyInstance { const app=Fastify(); registerErrorHandler(app); app.addHook('onRequest', requireApiKey); app.get('/health',async()=>({status:'ok'})); app.get('/v1/models',async()=>({object:'list',data:[]})); app.post('/v1/chat/completions',async(req,reply)=>{const parsed=schema.safeParse(req.body); if(!parsed.success)return reply.code(400).send({error:{message:parsed.error.message}}); if(!pool)return reply.code(503).send({error:{message:'No account pool configured'}}); const prompt=parsed.data.messages.map(m=>String(m.content)).join('\n'); if(parsed.data.stream){reply.header('content-type','text/event-stream'); const events:string[]=[]; await pool.run(async a=>a.client.generate({prompt,model:parsed.data.model},e=>{if(e.type==='text'){events.push('data: '+JSON.stringify({choices:[{delta:{content:e.text}}]})+'\\n\\n');}})); for(const event of events) reply.raw.write(event); reply.raw.write('data: [DONE]\\n\\n'); return reply;} const out=await pool.run(async a=>{const result:string[]=[]; await a.client.generate({prompt,model:parsed.data.model},e=>{if(e.type==='text')result.push(e.text??'')}); return result.join('')}); return {id:'chatcmpl-gemini',object:'chat.completion',choices:[{index:0,message:{role:'assistant',content:out},finish_reason:'stop'}]};}); app.post('/v1/responses',async(req,reply)=>{const body=req.body as {input?:unknown;model?:string}; if(!pool)return reply.code(503).send({error:{message:'No account pool configured'}}); const prompt=typeof body.input==='string'?body.input:JSON.stringify(body.input??''); const text=await pool.run(async a=>{let out=''; await a.client.generate({prompt,model:body.model},e=>{if(e.type==='text')out+=e.text??''}); return out;}); return {id:'resp-gemini',object:'response',output:[{type:'message',role:'assistant',content:[{type:'output_text',text}]}]};}); app.post('/v1/messages',async(req,reply)=>{const body=req.body as {messages?:unknown[];model?:string}; if(!pool)return reply.code(503).send({error:{message:'No account pool configured'}}); const prompt=JSON.stringify(body.messages??[]); const text=await pool.run(async a=>{let out=''; await a.client.generate({prompt,model:body.model},e=>{if(e.type==='text')out+=e.text??''}); return out;}); return {id:'msg-gemini',type:'message',role:'assistant',model:body.model??'gemini',content:[{type:'text',text}],stop_reason:'end_turn'};}); app.post('/v1beta/models/:model\\:generateContent',async(req)=>({candidates:[{content:{role:'model',parts:[{text:JSON.stringify(req.body)}]}}]})); return app; }
+import { registerChatCompletions } from './routes/openai/chat-completions.js';
+import { registerResponses } from './routes/openai/responses.js';
+import { registerModels } from './routes/openai/models.js';
+import { registerImages } from './routes/openai/images.js';
+import { registerAnthropicMessages } from './routes/anthropic/messages.js';
+import { registerCountTokens } from './routes/anthropic/count-tokens.js';
+import { registerGenerateContent } from './routes/google/generate-content.js';
+export function createApp(pool?:AccountPool):FastifyInstance {
+  const app=Fastify({logger:false});
+  registerErrorHandler(app);
+  app.addHook('onRequest',requireApiKey);
+  app.get('/health',async()=>({status:'ok',accounts:pool?.status()??{total:0,available:0,coolingDown:0,accounts:[]}}));
+  registerChatCompletions(app,pool); registerResponses(app,pool); registerModels(app,pool);
+  registerImages(app); registerAnthropicMessages(app,pool); registerCountTokens(app); registerGenerateContent(app,pool);
+  return app;
+}

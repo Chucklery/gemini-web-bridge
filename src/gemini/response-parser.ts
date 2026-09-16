@@ -8,8 +8,10 @@ export function parseGeminiResponse(text: string): {events:GeminiEvent[];session
     let payload:unknown;try{payload=JSON.parse(record[2]);}catch{continue;}if(!Array.isArray(payload))continue;
     const ids=payload[1];if(Array.isArray(ids)){session={cid:stringAt(ids,0)||session.cid,rid:stringAt(ids,1)||session.rid,rcid:session.rcid};events.push({type:'session',session});}
     const candidates=payload[4];if(!Array.isArray(candidates))continue;
-    for(const candidate of candidates){if(!Array.isArray(candidate)||!stringAt(candidate,0).startsWith('rc_'))continue;const rcid=stringAt(candidate,0);if(rcid!==session.rcid){session={...session,rcid};events.push({type:'session',session});}const content=candidate[1];const value=Array.isArray(content)?stringAt(content,0):'';if(value)events.push({type:'text',text:value});}
+    for(const candidate of candidates){if(!Array.isArray(candidate)||!stringAt(candidate,0).startsWith('rc_'))continue;const rcid=stringAt(candidate,0);if(rcid!==session.rcid){session={...session,rcid};events.push({type:'session',session});}const content=candidate[1];const value=Array.isArray(content)?stringAt(content,0):'';if(value)events.push({type:'text',text:value});const thought=pathString(candidate,[37,0,0]);if(thought)events.push({type:'thought',text:thought});const phase=pathNumber(candidate,[8,0]);if(phase!==undefined)events.push({type:'phase',phase});}
   }
   events.push({type:'done',session});return {events,session};
 }
 function stringAt(value:unknown,index:number):string{if(!Array.isArray(value))return '';return typeof value[index]==='string'?value[index] as string:'';}
+function pathString(value:unknown,path:number[]):string{let current=value;for(const index of path){if(!Array.isArray(current))return '';current=current[index];}return typeof current==='string'?current:'';}
+function pathNumber(value:unknown,path:number[]):number|undefined{let current=value;for(const index of path){if(!Array.isArray(current))return undefined;current=current[index];}return typeof current==='number'?current:undefined;}
