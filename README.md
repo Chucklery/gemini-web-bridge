@@ -201,5 +201,9 @@ docs/           架构和开发方案
 
 ## 相关文档
 
+- [开发者文档站](https://chucklery.github.io/gemini-web-bridge/)
+- 本地预览：`npm run docs:dev`
+- 本地构建：`npm run docs:build`
+
 - [自动 Gemini Cookie 认证与 Codex 断线治理开发方案](docs/automatic-gemini-cookie-auth-development-plan.md)
 - [架构评审与迁移方案](docs/architecture-review-and-migration-plan.md)

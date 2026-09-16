@@ -11,3 +11,6 @@ dist
 
 # private browser authentication state
 .gemini-web-bridge/
+.DS_Store
+docs/.vitepress/dist/
+docs/.vitepress/cache/

@@ -13,7 +13,10 @@
     "auth": "node dist/cli/auth.js",
     "doctor": "node dist/cli/auth.js status",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "fastify": "^5.4.0",
@@ -25,7 +28,8 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.8.0",
-    "vitest": "^3.2.0"
+    "vitest": "^3.2.0",
+    "vitepress": "^1.6.4"
   },
   "optionalDependencies": {
     "playwright-core": "^1.63.0"
