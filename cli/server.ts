@@ -1,7 +1,9 @@
+import { loadEnvFile } from 'node:process';
 import { createApp } from '../src/server/app.js';
 import { loadConfig } from '../src/config/env.js';
 import { accountFromCookies } from '../src/accounts/factory.js';
 import { AccountPool } from '../src/accounts/pool.js';
+loadEnvFile();
 const config=loadConfig();
 const raw=config.GEMINI_COOKIES ? JSON.parse(config.GEMINI_COOKIES) as unknown : [];
 const cookies=Array.isArray(raw) ? raw as {name:string;value:string;domain?:string;path?:string}[] : [];
