@@ -1,4 +1,4 @@
-# Gemini Web2API
+# Gemini Web Bridge
 
 将 Gemini Web 会话封装为兼容 OpenAI、Anthropic 和 Google Generative Language API 的本地 HTTP 服务。
 
@@ -31,7 +31,7 @@
 
 ```bash
 git clone <your-fork-url>
-cd Gemini-Web2API-ts
+cd gemini-web-bridge
 npm install
 cp .env.example .env
 ```
