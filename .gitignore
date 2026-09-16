@@ -1,0 +1,10 @@
+# sys
+.DS_Store
+
+# ide
+.idea
+
+# env
+.env
+node_modules
+dist

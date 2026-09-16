@@ -1,0 +1,4 @@
+import { GeminiProtocolError } from '../shared/errors.js';
+export const ENDPOINTS={app:'https://gemini.google.com/app',batch:'https://gemini.google.com/_/BardChatUi/data/batchexecute',generate:'https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate'} as const;
+export function formBody(fields:Record<string,string>):string{return new URLSearchParams(fields).toString();}
+export function parseRpcRecords(input:string):unknown[][]{const result:unknown[][]=[];for(const line of input.split('\n')){let value:unknown;try{value=JSON.parse(line.trim().replace(/^\)\]\}'\s*/,''));}catch{continue;}if(!Array.isArray(value))continue;const nested=value.every(item=>Array.isArray(item));if(nested){for(const item of value)if(Array.isArray(item))result.push(item);}else{result.push(value);}}if(!result.length&&input.trim())throw new GeminiProtocolError('No Gemini RPC records',undefined,true);return result;}
