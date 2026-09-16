@@ -6,12 +6,20 @@ import { ensureProfilePath } from '../browser-auth/profile-path.js';
 import { openPersistentContext, type BrowserContext } from '../browser-auth/persistent-context.js';
 import { prepareLogin, waitForGeminiLogin } from '../browser-auth/login-flow.js';
 import { rm } from 'node:fs/promises';
-import { profilePath } from '../browser-auth/profile-path.js';
+import { authStatePath, profilePath } from '../browser-auth/profile-path.js';
+import { FileCookieSource } from './file-cookie-source.js';
 export interface BrowserCookieSourceOptions extends BrowserDiscoveryOptions { accountId?: string; profileRoot?: string; timeoutMs?: number; headlessRecovery?: boolean; }
 export class BrowserCookieSource implements CookieSource {
   private snapshotValue?: CookieSnapshot; private context?: BrowserContext; private refreshPromise?: Promise<CookieSnapshot>;
-  constructor(private readonly options: BrowserCookieSourceOptions = {}) {}
-  async current(signal?: AbortSignal): Promise<CookieSnapshot> { return this.snapshotValue ?? this.refresh('startup', signal); }
+  private readonly stored: FileCookieSource;
+  constructor(private readonly options: BrowserCookieSourceOptions = {}) {
+    this.stored = new FileCookieSource(authStatePath(options.accountId ?? 'default', options.profileRoot), options.accountId);
+  }
+  async current(signal?: AbortSignal): Promise<CookieSnapshot> {
+    if (this.snapshotValue) return this.snapshotValue;
+    try { this.snapshotValue = await this.stored.current(); return this.snapshotValue; }
+    catch { return this.refresh('startup', signal); }
+  }
   async refresh(reason: RefreshReason, signal?: AbortSignal): Promise<CookieSnapshot> { if (this.refreshPromise) return this.refreshPromise; this.refreshPromise = this.load(reason, signal).finally(() => { this.refreshPromise = undefined; }); return this.refreshPromise; }
   private async load(_reason: RefreshReason, signal?: AbortSignal): Promise<CookieSnapshot> {
     if (signal?.aborted) throw signal.reason ?? new Error('Browser authentication aborted');
@@ -29,6 +37,7 @@ export class BrowserCookieSource implements CookieSource {
         cookies = await exportGeminiCookies(context);
       }
       const expires = cookies.map(cookie => cookie.expires).filter((value): value is number => value !== undefined); const snapshot = { revision: createRevision(), acquiredAt: Date.now(), expiresAt: expires.length ? Math.min(...expires) * 1000 : undefined, cookies };
+      await this.stored.save(snapshot);
       this.snapshotValue = snapshot; return snapshot;
     } finally { await context?.close(); }
   }

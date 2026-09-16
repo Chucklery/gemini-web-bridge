@@ -7,3 +7,4 @@ export function profilePath(accountId: string, root = process.env.GEMINI_AUTH_DA
   return resolve(root, 'browser-profiles', createHash('sha256').update(accountId).digest('hex').slice(0, 24));
 }
 export async function ensureProfilePath(accountId: string, root?: string): Promise<string> { const path = profilePath(accountId, root); await mkdir(path, { recursive: true, mode: 0o700 }); return path; }
+export function authStatePath(accountId: string, root?: string): string { return join(profilePath(accountId, root), 'gemini-auth-state.json'); }
