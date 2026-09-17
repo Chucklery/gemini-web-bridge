@@ -8,7 +8,7 @@ export function parseModelCatalog(payload: unknown): GeminiModel[] {
     const hash=typeof raw[0]==='string'?raw[0]:'';
     const displayName=typeof raw[11]==='string'?raw[11]:(typeof raw[19]==='string'?raw[19]:'');
     const mode=typeof raw[17]==='number'?raw[17]:0;
-    if (!hash || !displayName || !mode) continue;
+    if (!hash || !displayName) continue;
     const slug=displayName.toLowerCase().replace(/[^a-z0-9.]+/g,'-').replace(/^-|-$/g,'');
     models.push({name:slug.startsWith('gemini-')?slug:'gemini-'+slug,displayName,description:typeof raw[12]==='string'?raw[12]:'',hash,mode,capabilities:['generateContent','streamGenerateContent'],default:raw[7]===true||raw[15]===true});
   }

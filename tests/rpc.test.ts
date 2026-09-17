@@ -9,4 +9,10 @@ describe('Gemini RPC framing', () => {
     const input=")]}'\n"+JSON.stringify([['e']]);
     expect(parseRpcRecords(input)[0][0]).toBe('e');
   });
+  it('parses complete length-prefixed frames', () => {
+    const first = JSON.stringify([['wrb.fr', 'x', 'one']]);
+    const second = JSON.stringify([['wrb.fr', 'y', 'two']]);
+    const input = `${first.length}\n${first}${second.length}\n${second}`;
+    expect(parseRpcRecords(input).map(record => record[1])).toEqual(['x', 'y']);
+  });
 });
