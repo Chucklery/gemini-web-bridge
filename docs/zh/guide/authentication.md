@@ -25,7 +25,7 @@ npm run auth -- logout   # 删除项目专用认证 Profile
 npm run auth -- import-chrome
 ```
 
-该命令读取 Chrome Cookie 数据库的临时副本，只导出 Google/Gemini Cookie，然后写入项目自己的 `gemini-auth-state.json`。它不接管正在运行的 Chrome，也不读取密码、验证码或页面内容。若多个 Profile 都有会话，请设置 `GEMINI_CHROME_PROFILE_NAME` 指定 `Default` 或 `Profile 2` 等目录名。
+该命令读取 Chrome Cookie 数据库的临时副本，只导出 Google/Gemini Cookie，然后写入项目自己的 `gemini-auth-state.json`。它不接管正在运行的 Chrome，也不读取密码、验证码或页面内容。检测到多个 Profile 时，必须设置 `GEMINI_CHROME_PROFILE_NAME` 指定 `Default` 或 `Profile 2` 等目录名。
 
 ## 生命周期
 

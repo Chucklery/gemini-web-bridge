@@ -68,7 +68,7 @@ npm start
 npm run auth -- import-chrome
 ```
 
-导入器只读取本机 Chrome 的 Cookie 数据库副本，解密后仅保留 Google/Gemini Cookie，并写入项目自己的认证快照；不会接管日常 Chrome，也不会读取密码、验证码或页面内容。多个 Chrome Profile 同时有 Gemini 会话时，在 `.env` 中设置 `GEMINI_CHROME_PROFILE_NAME=Profile 2`（按本机实际名称填写）后重试。Chrome 正在运行时若复制失败，请完全退出 Chrome 后再试。
+导入器只读取本机 Chrome 的 Cookie 数据库副本，解密后仅保留 Google/Gemini Cookie，并写入项目自己的认证快照；不会接管日常 Chrome，也不会读取密码、验证码或页面内容。检测到多个 Chrome Profile 时，必须在 `.env` 中设置 `GEMINI_CHROME_PROFILE_NAME=Profile 2`（按本机实际名称填写）后重试。Chrome 正在运行时若复制失败，请完全退出 Chrome 后再试。
 
 ### 健康检查
 

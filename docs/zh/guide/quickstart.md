@@ -38,7 +38,7 @@ npm run auth -- login
 npm run auth -- import-chrome
 ```
 
-多个 Chrome Profile 都有会话时，设置 `GEMINI_CHROME_PROFILE_NAME` 后重试。
+检测到多个 Chrome Profile 时，必须设置 `GEMINI_CHROME_PROFILE_NAME` 后重试。
 
 ## 4. 启动
 

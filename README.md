@@ -62,7 +62,7 @@ If the isolated window shows “Try using a different browser,” sign in to Gem
 npm run auth -- import-chrome
 ```
 
-The importer reads a temporary copy of Chrome's Cookie database, keeps only Google/Gemini cookies, and saves them to the project-owned auth state. It does not take over the daily browser or read passwords, verification codes, or page contents. If more than one Chrome profile has a Gemini session, set `GEMINI_CHROME_PROFILE_NAME=Profile 2` (using the actual local profile name) and retry. If copying fails while Chrome is open, fully quit Chrome and retry.
+The importer reads a temporary copy of Chrome's Cookie database, keeps only Google/Gemini cookies, and saves them to the project-owned auth state. It does not take over the daily browser or read passwords, verification codes, or page contents. If more than one Chrome profile is detected, `GEMINI_CHROME_PROFILE_NAME` is required; set it to `Profile 2` (using the actual local profile name) and retry. If copying fails while Chrome is open, fully quit Chrome and retry.
 
 If no supported browser is available, explicitly use the compatibility `env` mode:
 
@@ -164,7 +164,7 @@ Protocol compatibility does not guarantee identical behavior. Gemini Web model n
 | `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`, `chrome`, or `msedge` |
 | `GEMINI_BROWSER_EXECUTABLE_PATH` | empty | Local browser path override |
 | `GEMINI_CHROME_USER_DATA_DIR` | empty | Chrome User Data root used only by `auth import-chrome`; auto-discovered when empty |
-| `GEMINI_CHROME_PROFILE_NAME` | empty | Chrome profile directory used only by `auth import-chrome`, e.g. `Default` or `Profile 2` |
+| `GEMINI_CHROME_PROFILE_NAME` | empty | Chrome profile directory used only by `auth import-chrome`; required when multiple profiles are detected, e.g. `Default` or `Profile 2` |
 | `GEMINI_BROWSER_HEADLESS_RECOVERY` | `false` | Allow a headless recovery attempt before showing a window; Google sign-in may reject it |
 | `GEMINI_AUTH_DATA_DIR` | empty | Auth profile root; keep it outside the repository |
 | `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | Cookie refresh lead time |

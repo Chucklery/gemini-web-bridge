@@ -18,6 +18,9 @@ export interface ImportedChromeCookies {
 export async function importGeminiCookiesFromChrome(options: ChromeCookieImportOptions = {}): Promise<ImportedChromeCookies> {
   const profiles = await discoverChromeProfiles(options);
   if (!profiles.length) throw new Error('No local Chrome profile with a Cookie database was found');
+  if (!options.profileName && profiles.length > 1) {
+    throw new Error('Multiple Chrome profiles were found. Set GEMINI_CHROME_PROFILE_NAME to choose one.');
+  }
 
   const executable = discoverBrowser({
     channel: 'chrome',
@@ -25,24 +28,13 @@ export async function importGeminiCookiesFromChrome(options: ChromeCookieImportO
     platform: options.platform,
     env: options.env,
   });
-  const matches: ImportedChromeCookies[] = [];
-
-  for (const profile of profiles) {
-    try {
-      const cookies = await readChromeProfileCookies(profile, executable, options.timeoutMs ?? 30000);
-      matches.push({ profileName: profile.profileName, cookies });
-    } catch (error) {
-      if (options.profileName) throw error;
-    }
+  const profile = profiles[0];
+  try {
+    const cookies = await readChromeProfileCookies(profile, executable, options.timeoutMs ?? 30000);
+    return { profileName: profile.profileName, cookies };
+  } catch {
+    throw new Error('Unable to import the selected Chrome profile. Confirm Gemini is signed in and close Chrome before retrying.');
   }
-
-  if (!matches.length) {
-    throw new Error('No valid Gemini session was found in local Chrome. Open Gemini in Chrome and try again.');
-  }
-  if (!options.profileName && matches.length > 1) {
-    throw new Error('Multiple Chrome profiles contain Gemini sessions. Set GEMINI_CHROME_PROFILE_NAME to choose one.');
-  }
-  return matches[0];
 }
 
 export async function importGeminiSnapshotFromChrome(options: ChromeCookieImportOptions = {}, accountHint?: string): Promise<CookieSnapshot & { profileName: string }> {

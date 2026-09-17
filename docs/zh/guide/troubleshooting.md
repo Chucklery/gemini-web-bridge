@@ -18,7 +18,7 @@
 npm run auth -- import-chrome
 ```
 
-如果本机有多个 Chrome Profile，设置 `GEMINI_CHROME_PROFILE_NAME=Default` 或实际的 Profile 目录名。导入只保存筛选后的 Google/Gemini Cookie；若 Chrome 正在运行时导入失败，请完全退出 Chrome 后重试。
+如果本机检测到多个 Chrome Profile，必须设置 `GEMINI_CHROME_PROFILE_NAME=Default` 或实际的 Profile 目录名。导入只保存筛选后的 Google/Gemini Cookie；若 Chrome 正在运行时导入失败，请完全退出 Chrome 后重试。
 
 ### auth_required 或 bootstrap 失败
 

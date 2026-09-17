@@ -12,7 +12,7 @@ Google may block the isolated automated login window. Sign in to Gemini in the n
 npm run auth -- import-chrome
 ```
 
-Set `GEMINI_CHROME_PROFILE_NAME=Default` or the actual profile directory when multiple Chrome profiles contain sessions. If the import cannot copy the database while Chrome is open, fully quit Chrome and retry.
+Set `GEMINI_CHROME_PROFILE_NAME=Default` or the actual profile directory when multiple Chrome profiles are detected. If the import cannot copy the database while Chrome is open, fully quit Chrome and retry.
 
 ## auth_required or bootstrap failure
 

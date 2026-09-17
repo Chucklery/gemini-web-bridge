@@ -29,7 +29,7 @@ npm run docs:build
 ## 提交检查清单
 
 - 不提交 `.env`、Cookie、认证状态文件、API Key、浏览器 Profile 或诊断截图；
-- 不读取用户日常浏览器 Profile，不连接已有浏览器或开放外部 CDP 端口；
+- 默认运行路径不读取用户日常浏览器 Profile，不连接已有浏览器或开放外部 CDP 端口；显式 `import-chrome` 只能读取临时 Cookie 数据库副本；
 - 不自动填写密码、验证码或 Passkey；
 - 不将 Chromium、Electron 或用户浏览器变成服务运行时依赖；
 - 运行 `npm run build`、`npm test` 和 `npm run docs:build`；

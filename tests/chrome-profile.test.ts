@@ -3,6 +3,7 @@ import { access, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/p
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { copyChromeProfileForCookieImport, discoverChromeProfiles } from '../src/browser-auth/chrome-profile.js';
+import { importGeminiCookiesFromChrome } from '../src/browser-auth/chrome-cookie-import.js';
 
 describe('Chrome profile import boundaries', () => {
   it('discovers only conventional Chrome profiles with a Cookie database', async () => {
@@ -46,5 +47,18 @@ describe('Chrome profile import boundaries', () => {
 
   it('rejects unsafe explicit profile names', async () => {
     await expect(discoverChromeProfiles({ userDataDir: '/tmp', profileName: '../Default' })).rejects.toThrow(/GEMINI_CHROME_PROFILE_NAME/);
+  });
+
+  it('requires an explicit profile when more than one Chrome profile exists', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gemini-web-bridge-chrome-test-'));
+    try {
+      for (const name of ['Default', 'Profile 2']) {
+        await mkdir(join(root, name), { recursive: true });
+        await writeFile(join(root, name, 'Cookies'), 'encrypted-cookie-db');
+      }
+      await expect(importGeminiCookiesFromChrome({ userDataDir: root })).rejects.toThrow(/GEMINI_CHROME_PROFILE_NAME/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

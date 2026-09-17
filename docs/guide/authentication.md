@@ -19,7 +19,7 @@ If Google blocks the isolated window with “Try using a different browser,” s
 npm run auth -- import-chrome
 ```
 
-The command reads a temporary copy of Chrome's Cookie database, exports only Google/Gemini cookies, and saves the project-owned auth state. Set `GEMINI_CHROME_PROFILE_NAME` when more than one local profile contains a Gemini session.
+The command reads a temporary copy of Chrome's Cookie database, exports only Google/Gemini cookies, and saves the project-owned auth state. When more than one local Chrome profile is detected, `GEMINI_CHROME_PROFILE_NAME` is required.
 
 ## Browser-free service runtime
 

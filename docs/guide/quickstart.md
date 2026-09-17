@@ -35,7 +35,7 @@ npm run build
 npm start
 ```
 
-If Google blocks the isolated window with “Try using a different browser,” sign in to Gemini in normal Chrome and run `npm run auth -- import-chrome` once. Set `GEMINI_CHROME_PROFILE_NAME` if multiple Chrome profiles contain sessions.
+If Google blocks the isolated window with “Try using a different browser,” sign in to Gemini in normal Chrome and run `npm run auth -- import-chrome` once. `GEMINI_CHROME_PROFILE_NAME` is required when multiple Chrome profiles are detected.
 
 ## Check the service
 
