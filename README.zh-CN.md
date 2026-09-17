@@ -19,7 +19,7 @@
 - 基础多账号池抽象及单账号串行执行；
 - 使用隔离的 Chrome/Edge Profile 进行登录和认证恢复。
 
-明确不支持：图像生成、官方 Gemini API Key、完整的多账号 CLI。图像端点会返回 `501 Not Implemented`。浏览器认证不会下载 Chromium，不会读取日常浏览器 Profile，也不会在运行时执行 Gemini 前端脚本。
+明确不支持：图像生成、官方 Gemini API Key、完整的多账号 CLI。图像端点会返回 `501 Not Implemented`。默认浏览器认证不会下载 Chromium，也不会读取日常浏览器 Profile；提供了显式的一次性 Chrome Cookie 导入命令作为登录被 Google 拦截时的兼容路径。
 
 ## 快速开始
 
@@ -62,6 +62,14 @@ npm run build
 npm start
 ```
 
+如果隔离窗口显示“请尝试使用其他浏览器”，可以先在日常 Chrome 中打开 Gemini 并确认已登录，再执行一次性导入：
+
+```bash
+npm run auth -- import-chrome
+```
+
+导入器只读取本机 Chrome 的 Cookie 数据库副本，解密后仅保留 Google/Gemini Cookie，并写入项目自己的认证快照；不会接管日常 Chrome，也不会读取密码、验证码或页面内容。多个 Chrome Profile 同时有 Gemini 会话时，在 `.env` 中设置 `GEMINI_CHROME_PROFILE_NAME=Profile 2`（按本机实际名称填写）后重试。Chrome 正在运行时若复制失败，请完全退出 Chrome 后再试。
+
 ### 健康检查
 
 ```bash
@@ -80,7 +88,7 @@ npm run setup -- codex
 
 ## 认证模式
 
-`auto`（默认）和 `browser` 使用项目专用浏览器 Profile；首次登录、显式 `refresh` 或认证失效恢复时才打开浏览器。`env` 是无浏览器环境下的兼容救援模式，要求通过 `GEMINI_COOKIES` 传入真实 Cookie，凭据只保留在进程中。
+`auto`（默认）和 `browser` 使用项目专用浏览器 Profile；首次登录、显式 `refresh` 或认证失效恢复时才打开浏览器。`import-chrome` 是显式的一次性 CLI 操作，不是认证模式。`env` 是无浏览器环境下的兼容救援模式，要求通过 `GEMINI_COOKIES` 传入真实 Cookie，凭据只保留在进程中。
 
 ```bash
 npm run auth -- login
@@ -89,7 +97,7 @@ npm run auth -- refresh
 npm run auth -- logout
 ```
 
-Google 要求交互验证时，应执行 `login` 并在可见窗口中完成验证。项目不会填写密码、验证码或 Passkey，也不会接管用户日常浏览器 Profile。认证状态缺失或失效时，服务会失败关闭，不会降级为匿名请求。
+Google 要求交互验证时，应执行 `login` 并在可见窗口中完成验证。项目不会填写密码、验证码或 Passkey，也不会接管用户日常浏览器 Profile。只有用户明确执行 `import-chrome` 时才会读取 Chrome Cookie 数据库的临时副本。认证状态缺失或失效时，服务会失败关闭，不会降级为匿名请求。
 
 ## API 概览
 
@@ -123,7 +131,7 @@ curl http://127.0.0.1:8787/v1/chat/completions \
 - 不要提交 `.env`、Cookie、`gemini-auth-state.json`、API Key、代理凭据、请求体或浏览器 Profile。
 - Cookie 泄露后应立即在 Google 账号安全设置中撤销会话。
 - 日志、错误、截图和诊断信息必须脱敏，不得包含 Cookie 值、API Key、账号邮箱或请求正文。
-- 认证数据目录应放在仓库之外，并按凭据存储进行权限保护。
+- 认证数据目录应放在仓库之外，并按凭据存储进行权限保护。Chrome 导入的临时副本在完成后会删除；导入失败时应完全退出 Chrome 后重试。
 
 ## 开发与文档
 

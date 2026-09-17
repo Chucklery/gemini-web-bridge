@@ -18,6 +18,6 @@ The browser is opened only when the state file is missing or expired, when the u
 
 The file is `gemini-auth-state.json` inside the hashed account profile directory. It contains only the validated Gemini cookie snapshot, uses owner-only permissions (`0700` directory, `0600` file), and is written through a temporary file followed by rename. Treat it as a login credential: do not commit, log, copy, or upload it.
 
-## Why not use the daily browser profile?
+## Daily browser profile import is explicit only
 
-Reading a daily browser database, attaching to an existing browser, or exposing a CDP port increases credential exposure and creates profile-lock and version problems. A project-owned profile gives the auth state a clear owner, account isolation, and logout boundary.
+Normal startup never reads a daily browser database, attaches to an existing browser, or exposes a CDP port. When Google blocks automated login, the explicit `npm run auth -- import-chrome` command can read a temporary copy of Chrome's Cookie database, filter it to Google/Gemini cookies, and save the result to the project-owned state. This keeps import separate from runtime authentication and avoids taking over the user's live browser.

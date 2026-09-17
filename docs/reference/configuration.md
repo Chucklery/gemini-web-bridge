@@ -11,6 +11,8 @@
 | GEMINI_AUTH_TIMEOUT_MS | 120000 | Browser setup/recovery timeout |
 | GEMINI_BROWSER_CHANNEL | auto | auto, chrome, or msedge |
 | GEMINI_BROWSER_EXECUTABLE_PATH | empty | Browser path override |
+| GEMINI_CHROME_USER_DATA_DIR | empty | Chrome User Data root used only by `auth import-chrome`; auto-discovered when empty |
+| GEMINI_CHROME_PROFILE_NAME | empty | Chrome profile directory used only by `auth import-chrome`, e.g. `Default` or `Profile 2` |
 | GEMINI_BROWSER_HEADLESS_RECOVERY | false | Allow a headless recovery attempt before showing a window; Google sign-in may reject it |
 | GEMINI_AUTH_DATA_DIR | empty | Root directory for the isolated profile and auth state |
 | GEMINI_PROXY | empty | HTTP/HTTPS proxy |

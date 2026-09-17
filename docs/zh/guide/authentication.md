@@ -19,6 +19,14 @@ npm run auth -- logout   # 删除项目专用认证 Profile
 
 `status` 只输出 ready、revision、获取/过期时间和 Cookie 数量等摘要。失败时会输出脱敏错误。
 
+如果 Google 拦截项目专用窗口并显示“请尝试使用其他浏览器”，可在日常 Chrome 中完成 Gemini 登录后执行一次性导入：
+
+```bash
+npm run auth -- import-chrome
+```
+
+该命令读取 Chrome Cookie 数据库的临时副本，只导出 Google/Gemini Cookie，然后写入项目自己的 `gemini-auth-state.json`。它不接管正在运行的 Chrome，也不读取密码、验证码或页面内容。若多个 Profile 都有会话，请设置 `GEMINI_CHROME_PROFILE_NAME` 指定 `Default` 或 `Profile 2` 等目录名。
+
 ## 生命周期
 
 ```text
@@ -46,4 +54,4 @@ GEMINI_COOKIES='[{"name":"SID","value":"真实值","domain":".google.com","path"
 
 ## 安全边界
 
-认证状态文件和 Cookie 都是完整登录凭据。项目不会读取日常浏览器 Profile、连接已有浏览器、开放外部 CDP 端口或填写密码、验证码、Passkey。认证失败会失败关闭，不会发起匿名请求。
+认证状态文件和 Cookie 都是完整登录凭据。项目默认不会读取日常浏览器 Profile、连接已有浏览器、开放外部 CDP 端口或填写密码、验证码、Passkey；只有用户明确执行 `import-chrome` 时才会读取 Chrome Cookie 数据库的临时副本。认证失败会失败关闭，不会发起匿名请求。

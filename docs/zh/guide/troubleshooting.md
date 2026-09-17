@@ -10,6 +10,16 @@
 
 确认已安装 Chrome 或 Edge。必要时设置 `GEMINI_BROWSER_CHANNEL=chrome` 或 `msedge`，也可以用 `GEMINI_BROWSER_EXECUTABLE_PATH` 指定可执行文件。不要关闭浏览器安全特性绕过登录拦截；无浏览器机器可明确使用 `GEMINI_AUTH_MODE=env` 救援。
 
+### Google 提示“请尝试使用其他浏览器”
+
+这通常是 Google 拦截了项目专用的自动化登录窗口。先在日常 Chrome 中打开 Gemini 并确认已登录，再执行：
+
+```bash
+npm run auth -- import-chrome
+```
+
+如果本机有多个 Chrome Profile，设置 `GEMINI_CHROME_PROFILE_NAME=Default` 或实际的 Profile 目录名。导入只保存筛选后的 Google/Gemini Cookie；若 Chrome 正在运行时导入失败，请完全退出 Chrome 后重试。
+
 ### auth_required 或 bootstrap 失败
 
 依次执行：

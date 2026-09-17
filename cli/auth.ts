@@ -2,13 +2,26 @@ import { loadEnvFile } from 'node:process';
 import { loadConfig } from '../src/config/env.js';
 import { BrowserCookieSource } from '../src/auth/browser-cookie-source.js';
 import { redact } from '../src/auth/redaction.js';
+import { FileCookieSource } from '../src/auth/file-cookie-source.js';
+import { authStatePath } from '../src/browser-auth/profile-path.js';
+import { importGeminiSnapshotFromChrome } from '../src/browser-auth/chrome-cookie-import.js';
 
 loadEnvFile();
 const config = loadConfig();
 const command = process.argv[2] ?? 'status';
 const source = new BrowserCookieSource({ accountId: config.GEMINI_AUTH_PROFILE, profileRoot: config.GEMINI_AUTH_DATA_DIR || undefined, channel: config.GEMINI_BROWSER_CHANNEL, executablePath: config.GEMINI_BROWSER_EXECUTABLE_PATH || undefined, timeoutMs: config.GEMINI_AUTH_TIMEOUT_MS, headlessRecovery: config.GEMINI_BROWSER_HEADLESS_RECOVERY });
 try {
-  if (command === 'login' || command === 'refresh') {
+  if (command === 'import-chrome') {
+    const snapshot = await importGeminiSnapshotFromChrome({
+      userDataDir: config.GEMINI_CHROME_USER_DATA_DIR || undefined,
+      profileName: config.GEMINI_CHROME_PROFILE_NAME || undefined,
+      executablePath: config.GEMINI_BROWSER_EXECUTABLE_PATH || undefined,
+      timeoutMs: config.GEMINI_AUTH_TIMEOUT_MS,
+    }, config.GEMINI_AUTH_PROFILE);
+    const state = new FileCookieSource(authStatePath(config.GEMINI_AUTH_PROFILE, config.GEMINI_AUTH_DATA_DIR || undefined), config.GEMINI_AUTH_PROFILE);
+    await state.save(snapshot);
+    console.log(JSON.stringify({ status: 'ready', source: 'chrome', profileName: snapshot.profileName, revision: snapshot.revision, acquiredAt: snapshot.acquiredAt, cookieCount: snapshot.cookies.length }));
+  } else if (command === 'login' || command === 'refresh') {
     const snapshot = await source.refresh(command === 'login' ? 'manual' : 'expired');
     console.log(JSON.stringify({ status: 'ready', revision: snapshot.revision, acquiredAt: snapshot.acquiredAt, cookieCount: snapshot.cookies.length }));
   } else if (command === 'status') {

@@ -4,6 +4,16 @@
 
 Install Chrome or Edge, or set GEMINI_BROWSER_CHANNEL / GEMINI_BROWSER_EXECUTABLE_PATH. You may explicitly switch to GEMINI_AUTH_MODE=env as a rescue mode. Do not disable browser security features to bypass a login block.
 
+## Google says “Try using a different browser”
+
+Google may block the isolated automated login window. Sign in to Gemini in the normal Chrome profile, then run:
+
+```bash
+npm run auth -- import-chrome
+```
+
+Set `GEMINI_CHROME_PROFILE_NAME=Default` or the actual profile directory when multiple Chrome profiles contain sessions. If the import cannot copy the database while Chrome is open, fully quit Chrome and retry.
+
 ## auth_required or bootstrap failure
 
 Run npm run auth -- status, then npm run auth -- refresh. If Google requests interactive verification, run npm run auth -- login and complete it in the visible window. Check the system clock, proxy, and browser version.

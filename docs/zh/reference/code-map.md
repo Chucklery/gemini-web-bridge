@@ -4,7 +4,7 @@
 
 ```text
 src/auth/          Cookie 来源、策略、会话管理与脱敏
-src/browser-auth/  系统浏览器发现、隔离 Profile 与登录流程
+src/browser-auth/  系统浏览器发现、隔离 Profile、登录流程与显式 Chrome 导入
 src/accounts/      账号、租约、balancer、账户池与冷却
 src/gemini/        Gemini Web bootstrap、模型、RPC、请求/响应解析
 src/transport/     Undici HTTP、代理、Cookie 与流式读取边界

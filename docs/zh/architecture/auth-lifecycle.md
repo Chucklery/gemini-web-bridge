@@ -25,4 +25,4 @@
 
 状态文件为 `gemini-auth-state.json`，目录权限为 0700，文件权限为 0600。它等同于登录凭据，不得提交、记录、复制或上传。Cookie 值不得出现在日志、异常、测试快照、诊断截图或健康检查响应中。
 
-不读取日常浏览器 Profile、不连接已有浏览器、不开放外部 CDP 端口，可以避免凭据扩大暴露、Profile 锁冲突和浏览器版本耦合，并明确 logout 的责任边界。
+正常启动不会读取日常浏览器 Profile、连接已有浏览器或开放外部 CDP 端口。若 Google 拦截自动化登录，可显式执行 `npm run auth -- import-chrome`：命令只读取 Chrome Cookie 数据库的临时副本，筛选 Google/Gemini Cookie 后写入项目自己的状态文件，不接管用户正在运行的浏览器。

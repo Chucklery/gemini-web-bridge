@@ -22,7 +22,7 @@ The project is intended for local experiments and development. It currently supp
 
 The browser is used only during initial setup or explicit authentication recovery. After a successful setup, the service reads the local auth state file and sends Gemini Web requests over HTTP; normal startup and requests do not launch a browser or execute frontend scripts.
 
-Not supported yet: image generation, the official Gemini API key, and the complete multi-account CLI. Image endpoints return `501 Not Implemented`. Browser authentication does not download Chromium or read the daily browser profile.
+Not supported yet: image generation, the official Gemini API key, and the complete multi-account CLI. Image endpoints return `501 Not Implemented`. Normal browser authentication does not download Chromium or read the daily browser profile; an explicit one-time Chrome Cookie import is available when Google blocks the isolated login window.
 
 ## Quick start
 
@@ -55,6 +55,14 @@ npm run auth -- login
 ```
 
 The validated Cookie snapshot is saved as `gemini-auth-state.json` inside the account's private auth profile directory (`~/.gemini-web-bridge/browser-profiles/<hashed-account-id>/` by default). The file is created with owner-only permissions and is used on later service starts. `npm run auth -- refresh` explicitly reopens the browser to recover the session.
+
+If the isolated window shows “Try using a different browser,” sign in to Gemini in the user's normal Chrome first, then run the one-time importer:
+
+```bash
+npm run auth -- import-chrome
+```
+
+The importer reads a temporary copy of Chrome's Cookie database, keeps only Google/Gemini cookies, and saves them to the project-owned auth state. It does not take over the daily browser or read passwords, verification codes, or page contents. If more than one Chrome profile has a Gemini session, set `GEMINI_CHROME_PROFILE_NAME=Profile 2` (using the actual local profile name) and retry. If copying fails while Chrome is open, fully quit Chrome and retry.
 
 If no supported browser is available, explicitly use the compatibility `env` mode:
 
@@ -155,6 +163,8 @@ Protocol compatibility does not guarantee identical behavior. Gemini Web model n
 | `GEMINI_AUTH_TIMEOUT_MS` | `120000` | Browser setup and recovery timeout |
 | `GEMINI_BROWSER_CHANNEL` | `auto` | `auto`, `chrome`, or `msedge` |
 | `GEMINI_BROWSER_EXECUTABLE_PATH` | empty | Local browser path override |
+| `GEMINI_CHROME_USER_DATA_DIR` | empty | Chrome User Data root used only by `auth import-chrome`; auto-discovered when empty |
+| `GEMINI_CHROME_PROFILE_NAME` | empty | Chrome profile directory used only by `auth import-chrome`, e.g. `Default` or `Profile 2` |
 | `GEMINI_BROWSER_HEADLESS_RECOVERY` | `false` | Allow a headless recovery attempt before showing a window; Google sign-in may reject it |
 | `GEMINI_AUTH_DATA_DIR` | empty | Auth profile root; keep it outside the repository |
 | `GEMINI_COOKIE_REFRESH_SKEW_MS` | `300000` | Cookie refresh lead time |
@@ -170,7 +180,7 @@ Do not bind the service directly to the public Internet. Use HTTPS, a strong ran
 - Never commit `.env`, auth state, cookies, proxy credentials, request bodies, or API keys.
 - Do not expose the service directly to the Internet.
 - Logs, errors, screenshots, and diagnostics must not contain cookie values or API keys.
-- The project does not read a user's daily browser profile or fill passwords, verification codes, or passkeys.
+- Normal startup does not read a user's daily browser profile. The explicit `auth import-chrome` command reads a temporary copy of the Chrome Cookie database only; it never fills passwords, verification codes, or passkeys.
 
 ## Development
 

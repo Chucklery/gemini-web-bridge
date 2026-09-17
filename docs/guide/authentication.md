@@ -13,6 +13,14 @@ npm run auth -- logout      # remove the project-owned auth profile
 
 The login command opens an isolated Chrome/Edge profile. The user completes Google sign-in; the application never fills passwords, verification codes, or passkeys and never takes over the daily browser profile. The validated cookies are saved to `gemini-auth-state.json`.
 
+If Google blocks the isolated window with “Try using a different browser,” sign in to Gemini in the normal Chrome profile and run this explicit one-time import:
+
+```bash
+npm run auth -- import-chrome
+```
+
+The command reads a temporary copy of Chrome's Cookie database, exports only Google/Gemini cookies, and saves the project-owned auth state. Set `GEMINI_CHROME_PROFILE_NAME` when more than one local profile contains a Gemini session.
+
 ## Browser-free service runtime
 
 After setup, `npm start` reads the saved state file. Bootstrap, model discovery, generation, and streaming use the Node HTTP transport. No browser process and no Gemini frontend JavaScript are required during normal operation.

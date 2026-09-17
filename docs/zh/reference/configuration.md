@@ -22,6 +22,8 @@
 | --- | --- | --- |
 | `GEMINI_BROWSER_CHANNEL` | `auto` | 浏览器通道：`auto`、`chrome` 或 `msedge`。 |
 | `GEMINI_BROWSER_EXECUTABLE_PATH` | 空 | 覆盖浏览器可执行文件路径。 |
+| `GEMINI_CHROME_USER_DATA_DIR` | 空 | `import-chrome` 使用的 Chrome User Data 根目录；为空时按操作系统自动发现。 |
+| `GEMINI_CHROME_PROFILE_NAME` | 空 | `import-chrome` 使用的 Profile 目录名，例如 `Default` 或 `Profile 2`；为空时自动扫描并要求唯一匹配。 |
 | `GEMINI_BROWSER_HEADLESS_RECOVERY` | `false` | 是否先尝试无头恢复。Google 可能拒绝自动化/无头登录，默认使用可见窗口。 |
 
 ## 上游、流式与重放

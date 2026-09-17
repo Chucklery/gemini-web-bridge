@@ -74,7 +74,7 @@ BrowserCookieSource ──校验/脱敏/版本化──▶ GeminiCookies（内�
 | 方案 | 用户体验 | 安全性 | 跨平台 | 结论 |
 |---|---:|---:|---:|---|
 | 手工复制 Cookie | 差 | 中 | 高 | 保留为兼容/救援模式 |
-| 读取 Chrome Cookie DB | 好 | 低 | 低 | 不实现 |
+| 读取 Chrome Cookie DB | 好 | 低 | 低 | 仅作为显式一次性导入 |
 | CDP 接管现有浏览器 | 中 | 低 | 中 | 不作为正式方案 |
 | `playwright-core` + 系统 Chrome/Edge + 独立 Profile | 好 | 高 | 高 | **首选** |
 | Playwright 下载自带 Chromium | 好 | 中 | 高 | 默认不启用，仍然增加较大下载 |
@@ -83,6 +83,8 @@ BrowserCookieSource ──校验/脱敏/版本化──▶ GeminiCookies（内�
 首期继续让现有 Undici Transport 发请求，只把系统浏览器专用 Profile 中的 Cookie 快照同步到进程内存。`playwright-core` 作为 optional dependency，不执行 Playwright 的浏览器下载；运行时优先使用显式配置的 channel，否则依次探测 Chrome、Edge，`executablePath` 仅作为高级救援配置。找不到受支持浏览器时给出明确错误，并保留 `GEMINI_COOKIES` 兼容模式。
 
 已知限制是 Google 可能调整自动化浏览器的登录策略，系统浏览器升级也可能暂时超出当前 Playwright 的兼容范围。实现不得通过关闭浏览器安全功能或加入“反检测”补丁绕过限制；遇到登录阻断时明确失败并提示升级 `playwright-core`、改用另一受支持 channel，或显式切换到 `env` 救援模式。
+
+当 Google 拦截项目专用登录窗口时，提供 `npm run auth -- import-chrome` 作为显式的一次性兼容路径。它只复制 Chrome Cookie 数据库到 owner-only 临时目录，通过本机 Chrome 解密后筛选 Google/Gemini Cookie，保存到项目认证状态并立即清理临时目录；正常启动仍不读取日常 Profile，也不接管正在运行的浏览器。
 
 ## 5. 目标模块
 
@@ -104,6 +106,8 @@ src/browser-auth/
   profile-path.ts               # 每账户独立的项目 Profile 路径
   login-flow.ts                 # 可见登录、导航约束、登录完成判断
   cookie-export.ts              # browserContext.cookies(URL)
+  chrome-profile.ts             # 日常 Chrome Profile 发现与临时 Cookie 数据库副本
+  chrome-cookie-import.ts       # 显式一次性 Chrome Cookie 导入
   state.ts                      # signed_out/authenticating/ready/expired/error
 
 src/server/streaming/
@@ -180,6 +184,7 @@ export interface CookieSource {
 - 若认证辅助器以后拆成子进程，父子进程协议必须版本化并走私有 stdio/IPC，结果只包含 Cookie allowlist，不导出账号密码或本地存储全集。
 - Profile 目录、诊断包和 `.env` 必须加入 `.gitignore`；诊断输出只允许 `present/expired/domain/revision` 等元数据。
 - 不注入任意页面脚本，不加载扩展，不开放外部 CDP 端口；Playwright 必须直接拥有它启动的浏览器进程和项目专用 Profile。
+- `import-chrome` 不是默认认证来源；只复制并筛选临时 Cookie 数据库，不读取密码、页面内容或其他本地存储。
 - 禁止附加用户正在运行的浏览器、打开任意 URL、执行页面提供的命令，或向其他本地进程暴露调试接口。
 - 认证失败采用 fail-closed：不得回退到匿名请求、其他账号或旧快照并伪装成功。
 - 文档和 CLI 要明确这是非官方 Gemini Web 自动化，用户需遵守适用的 Google 条款和组织策略。
@@ -300,6 +305,7 @@ npm run doctor                        # Cookie、bootstrap、SSE、代理和 Cod
 - 将 `playwright-core` 作为可选依赖接入，禁止自动下载浏览器。
 - 实现 Chrome/Edge channel 与 executable path 探测、项目专用 persistent context 和导航约束。
 - 实现 Cookie 导出、无头恢复到可见登录的显式切换。
+- 实现显式 Chrome Cookie 导入、Profile 选择和临时副本清理。
 - 实现登录、状态、刷新、登出及单账户 smoke test。
 - 覆盖 macOS/Windows/Linux 的浏览器发现与 Profile 路径测试；CI 无浏览器时使用 `BrowserDriver` fake，不把浏览器二进制加入产物。
 

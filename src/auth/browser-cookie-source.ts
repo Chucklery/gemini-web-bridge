@@ -1,6 +1,5 @@
 import type { CookieSource, CookieSnapshot, RefreshReason } from './cookie-source.js';
-import { createRevision } from './cookie-source.js';
-import { exportGeminiCookies } from '../browser-auth/cookie-export.js';
+import { createCookieSnapshot, exportGeminiCookies } from '../browser-auth/cookie-export.js';
 import { discoverBrowser, type BrowserDiscoveryOptions } from '../browser-auth/browser-discovery.js';
 import { ensureProfilePath } from '../browser-auth/profile-path.js';
 import { openPersistentContext, type BrowserContext } from '../browser-auth/persistent-context.js';
@@ -38,7 +37,7 @@ export class BrowserCookieSource implements CookieSource {
         await waitForGeminiLogin(page, timeout, async () => (await context!.cookies('https://gemini.google.com/')).some(cookie => cookie.name === 'SID'));
         cookies = await exportGeminiCookies(context);
       }
-      const expires = cookies.map(cookie => cookie.expires).filter((value): value is number => value !== undefined); const snapshot = { revision: createRevision(), acquiredAt: Date.now(), expiresAt: expires.length ? Math.min(...expires) * 1000 : undefined, cookies };
+      const snapshot = createCookieSnapshot(cookies);
       await this.stored.save(snapshot);
       this.snapshotValue = snapshot; return snapshot;
     } finally { await context?.close(); }

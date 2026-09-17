@@ -32,6 +32,14 @@ npm run auth -- login
 
 命令打开项目专用窗口。请在窗口中手工完成登录及可能出现的验证步骤。成功后，经过校验的 Cookie 快照会写入账号专用目录，默认路径见[配置参考](../reference/configuration)。
 
+如果 Google 在项目专用窗口中提示“请尝试使用其他浏览器”，先在日常 Chrome 中登录 Gemini，再执行：
+
+```bash
+npm run auth -- import-chrome
+```
+
+多个 Chrome Profile 都有会话时，设置 `GEMINI_CHROME_PROFILE_NAME` 后重试。
+
 ## 4. 启动
 
 ```bash
