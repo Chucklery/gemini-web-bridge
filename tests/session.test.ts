@@ -1,3 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { ConversationState } from '../src/gemini/session.js';
+import { ConversationState, GeminiSession } from '../src/gemini/session.js';
 describe('ConversationState',()=>{it('updates only with non-empty protocol values',()=>{const state=new ConversationState({cid:'c'});state.update({rid:'r',rcid:''});expect(state.snapshot()).toEqual({cid:'c',rid:'r',rcid:''});});});
+describe('GeminiSession',()=>{it('serializes requests sharing one conversation',async()=>{const session=new GeminiSession();let active=0;let max=0;const client={generate:async(request:{conversation?:{update(next:Record<string,string>):void}},emit:()=>void)=>{active++;max=Math.max(max,active);request.conversation?.update({rid:String(active)});await new Promise(resolve=>setTimeout(resolve,5));active--;}} as never;await Promise.all([session.generate(client,{prompt:'a'},()=>{}),session.generate(client,{prompt:'b'},()=>{})]);expect(max).toBe(1);expect(session.snapshot().rid).toBe('1');});});
