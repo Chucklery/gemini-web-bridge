@@ -37,8 +37,9 @@ export default defineConfig({
           { text: '系统原理', items: [
             { text: '架构总览', link: '/zh/architecture/overview' },
             { text: '认证与 Cookie 生命周期', link: '/zh/architecture/auth-lifecycle' },
-            { text: '流式响应与重连', link: '/zh/architecture/streaming' },
-            { text: '账户池与错误治理', link: '/zh/architecture/accounts-and-errors' },
+              { text: '流式响应与重连', link: '/zh/architecture/streaming' },
+              { text: 'Google Gemini Web Provider 开发', link: '/zh/architecture/google-web-client-development' },
+              { text: '账户池与错误治理', link: '/zh/architecture/accounts-and-errors' },
             { text: '演进路线', link: '/zh/architecture/evolution' },
           ] },
         ],

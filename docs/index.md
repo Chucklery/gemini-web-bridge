@@ -21,6 +21,7 @@ layout: home
 | Configure or recover authentication | [Authentication](./guide/authentication) |
 | Call a compatible API | [API usage](./guide/api-usage) |
 | Understand the request path | [Architecture overview](./architecture/overview) |
+| Extend the Google Gemini Web provider | [Google provider development](/zh/architecture/google-web-client-development) |
 | Diagnose auth or streaming failures | [Troubleshooting](./guide/troubleshooting) |
 | Read the Chinese entry point | [简体中文 README](https://github.com/Chucklery/gemini-web-bridge/blob/main/README.zh-CN.md) |
 

@@ -9,7 +9,8 @@ Gemini Web Bridge 将 Gemini Web 会话转换为本地 HTTP 服务，并提供 O
 3. [API 使用](./guide/api-usage)
 4. [配置参考](./reference/configuration)
 5. [架构总览](./architecture/overview)
-6. [故障排查](./guide/troubleshooting)
+6. [Google Gemini Web Provider 开发文档](./architecture/google-web-client-development)
+7. [故障排查](./guide/troubleshooting)
 
 ## 运行模型
 
