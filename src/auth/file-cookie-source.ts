@@ -6,7 +6,8 @@ import type { CookieSnapshot, CookieSource, RefreshReason } from './cookie-sourc
 import { createRevision } from './cookie-source.js';
 
 interface PersistedAuthState {
-  version: 1;
+  version: 1 | 2;
+  revision?: string;
   acquiredAt: number;
   expiresAt?: number;
   cookies: StoredCookie[];
@@ -30,12 +31,15 @@ export class FileCookieSource implements CookieSource {
     } catch {
       throw new CookiePolicyError(`Gemini auth state is unavailable: ${this.stateFile}`);
     }
-    if (value.version !== 1 || !Array.isArray(value.cookies)) {
+    if ((value.version !== 1 && value.version !== 2) || !Array.isArray(value.cookies)) {
       throw new CookiePolicyError('Gemini auth state has an unsupported format');
+    }
+    if (value.expiresAt !== undefined && value.expiresAt <= Date.now()) {
+      throw new CookiePolicyError('Gemini auth state has expired');
     }
     validateCookies(value.cookies);
     return {
-      revision: createRevision(), accountHint: this.accountHint,
+      revision: value.revision ?? createRevision(), accountHint: this.accountHint,
       acquiredAt: value.acquiredAt, expiresAt: value.expiresAt,
       cookies: value.cookies.map(cookie => ({ ...cookie })),
     };
@@ -46,7 +50,7 @@ export class FileCookieSource implements CookieSource {
     await mkdir(dirname(this.stateFile), { recursive: true, mode: 0o700 });
     const temporary = `${this.stateFile}.${process.pid}.tmp`;
     const value: PersistedAuthState = {
-      version: 1, acquiredAt: snapshot.acquiredAt, expiresAt: snapshot.expiresAt,
+      version: 2, revision: snapshot.revision, acquiredAt: snapshot.acquiredAt, expiresAt: snapshot.expiresAt,
       cookies: snapshot.cookies.map(cookie => ({ ...cookie })),
     };
     await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });

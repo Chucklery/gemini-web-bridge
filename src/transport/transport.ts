@@ -11,6 +11,7 @@ export interface GeminiHttpRequest {
 export interface GeminiHttpResponse {
   status: number;
   headers: Record<string, string>;
+  setCookies?: string[];
   body: AsyncIterable<Uint8Array>;
   text(): Promise<string>;
   json<T = unknown>(): Promise<T>;

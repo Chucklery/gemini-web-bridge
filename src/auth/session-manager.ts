@@ -30,6 +30,18 @@ export class SessionManager {
   }
 
   private activate(session: AuthenticatedSession): AuthenticatedSession { this.active = session; return session; }
+
+  /** Replace the active session only if it was built from the expected revision. */
+  async replace(snapshot: CookieSnapshot, expectedRevision: string): Promise<AuthenticatedSession> {
+    if (this.active?.revision !== expectedRevision) {
+      throw new Error('Gemini auth session changed during update');
+    }
+    const cookies = new GeminiCookies();
+    await cookies.replace(snapshot.cookies);
+    if (this.validate) await this.validate(cookies);
+    if (this.source.save) await this.source.save(snapshot);
+    return this.activate({ revision: snapshot.revision, cookies, snapshot });
+  }
   invalidate(revision?: string): void { if (!revision || this.active?.revision === revision) this.active = undefined; }
 
   get revision(): string | undefined { return this.active?.revision; }

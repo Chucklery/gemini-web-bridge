@@ -14,6 +14,7 @@ export type RefreshReason = 'startup' | 'expired' | 'unauthorized' | 'manual';
 export interface CookieSource {
   current(signal?: AbortSignal): Promise<CookieSnapshot>;
   refresh(reason: RefreshReason, signal?: AbortSignal): Promise<CookieSnapshot>;
+  save?(snapshot: CookieSnapshot): Promise<void>;
   close?(): Promise<void>;
 }
 

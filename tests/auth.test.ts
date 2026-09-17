@@ -42,7 +42,8 @@ describe('cookie authentication foundation', () => {
       await writer.save(snapshot);
       const loaded = await new FileCookieSource(file, 'test').current();
       expect(loaded.cookies).toEqual(snapshot.cookies);
-      expect(JSON.parse(await readFile(file, 'utf8')).version).toBe(1);
+      expect(JSON.parse(await readFile(file, 'utf8')).version).toBe(2);
+      expect((await new FileCookieSource(file, 'test').current()).revision).toBe(snapshot.revision);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

@@ -28,6 +28,7 @@ export class UndiciTransport implements GeminiTransport {
       else if (value !== undefined) headers[key] = String(value);
     }
     const setCookie = response.headers['set-cookie'];
+    const setCookies = setCookie ? (Array.isArray(setCookie) ? setCookie.map(String) : [String(setCookie)]) : [];
     if (this.options.cookies && setCookie) {
       const values = Array.isArray(setCookie) ? setCookie : [setCookie];
       for (const value of values) await this.options.cookies.absorb(String(value), url);
@@ -35,6 +36,7 @@ export class UndiciTransport implements GeminiTransport {
     const body = response.body as unknown as AsyncIterable<Uint8Array>;
     return {
       status: response.statusCode, headers, body,
+      setCookies,
       text: () => response.body.text(),
       json: <T>() => response.body.json() as Promise<T>,
     };
