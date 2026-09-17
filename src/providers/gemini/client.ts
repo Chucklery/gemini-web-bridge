@@ -6,7 +6,7 @@ import type { ModelInfo, ProviderCapabilities, ProviderClient } from '../../core
 
 export class GeminiProviderClient implements ProviderClient {
   readonly provider = 'gemini-web' as const;
-  readonly capabilities: ProviderCapabilities = { streaming: true, tools: false, multimodal: false, maxConcurrency: 1 };
+  readonly capabilities: ProviderCapabilities = { streaming: true, tools: false, multimodal: true, outputResources: [], maxConcurrency: 1 };
   private readonly session: GeminiSession;
   constructor(private readonly client: GeminiClient) { this.session = new GeminiSession(); }
 

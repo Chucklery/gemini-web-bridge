@@ -1,5 +1,5 @@
 import { GeminiProtocolError } from '../shared/errors.js';
-export const ENDPOINTS={app:'https://gemini.google.com/app',batch:'https://gemini.google.com/_/BardChatUi/data/batchexecute',generate:'https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate'} as const;
+export const ENDPOINTS={app:'https://gemini.google.com/app',batch:'https://gemini.google.com/_/BardChatUi/data/batchexecute',generate:'https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate',upload:'https://content-push.googleapis.com/upload'} as const;
 export function formBody(fields:Record<string,string>):string{return new URLSearchParams(fields).toString();}
 export function parseRpcRecords(input:string):unknown[][]{
   const normalized=input.replace(/^\s*\)\]\}'\s*/, '').trim();

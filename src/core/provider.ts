@@ -3,7 +3,7 @@ import type { GenerationEvent } from './events.js';
 
 export type ProviderId = 'gemini-web' | 'chatgpt-web' | 'claude-web';
 export interface ModelInfo { id: string; displayName?: string; provider: ProviderId; capabilities?: string[] }
-export interface ProviderCapabilities { streaming: boolean; tools: boolean; multimodal: boolean; maxConcurrency: number }
+export interface ProviderCapabilities { streaming: boolean; tools: boolean; multimodal: boolean; outputResources?: string[]; maxConcurrency: number }
 
 export interface ProviderClient {
   readonly provider: ProviderId;

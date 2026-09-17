@@ -12,7 +12,7 @@ export function registerChatCompletions(app: FastifyInstance, pool?: AccountPool
     if (!pool) return reply.code(503).send({ error: { message: 'No account pool configured', type: 'server_error' } });
     const prompt = body.messages.map(message => `${message.role}: ${contentToText(message.content)}`).join('\n');
     if (!body.stream) {
-      const text = await pool.runWithRetry(async account => { let output = ''; await account.client.generate({ prompt, model: body.model }, event => { if (event.type === 'text') output += event.text ?? ''; }); return output; });
+      const text = await pool.runWithRetry(async account => { let output = ''; await account.client.generate({ prompt, model: body.model }, event => { if (event.type === 'text') output += event.text ?? ''; else if (event.type === 'resource') throw new Error(`OpenAI response resource is not supported: ${event.resource?.kind ?? 'unknown'}`); }); return output; });
       return { id: 'chatcmpl-gemini', object: 'chat.completion', choices: [{ index: 0, message: { role: 'assistant', content: text }, finish_reason: 'stop' }] };
     }
     reply.hijack(); reply.raw.writeHead(200, sseHeaders);
@@ -22,7 +22,7 @@ export function registerChatCompletions(app: FastifyInstance, pool?: AccountPool
     const heartbeat = setInterval(() => reply.raw.write('event: response.heartbeat\ndata: {"type":"response.heartbeat"}\n\n'), Number(process.env.GEMINI_SSE_HEARTBEAT_MS ?? 2000));
     const stall = setTimeout(() => controller.abort(new Error('Gemini stream stalled')), Number(process.env.GEMINI_STREAM_STALL_TIMEOUT_MS ?? 120000));
     try {
-      await pool.run(account => account.client.generate({ prompt, model: body.model }, event => { if (event.type === 'text') reply.raw.write(`data: ${JSON.stringify({ id: 'chatcmpl-gemini', object: 'chat.completion.chunk', choices: [{ index: 0, delta: { content: event.text ?? '' } }] })}\n\n`); }, controller.signal));
+      await pool.run(account => account.client.generate({ prompt, model: body.model }, event => { if (event.type === 'text') reply.raw.write(`data: ${JSON.stringify({ id: 'chatcmpl-gemini', object: 'chat.completion.chunk', choices: [{ index: 0, delta: { content: event.text ?? '' } }] })}\n\n`); else if (event.type === 'resource') throw new Error(`OpenAI response resource is not supported: ${event.resource?.kind ?? 'unknown'}`); }, controller.signal));
       reply.raw.write('data: [DONE]\n\n'); reply.raw.end();
     } catch (error) {
       if (!clientDisconnected) reply.raw.write(`data: ${JSON.stringify({ error: { message: error instanceof Error ? error.message : 'Gemini request failed', type: 'server_error' } })}\n\ndata: [DONE]\n\n`);

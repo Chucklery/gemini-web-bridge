@@ -5,11 +5,13 @@ import { GeminiRequestBuilder } from './request-builder.js';
 import { GeminiStreamParser } from './stream-parser.js';
 import { ENDPOINTS, formBody, parseRpcRecords } from './rpc.js';
 import { parseModelCatalog } from './models.js';
+import { GeminiUploadClient, type GeminiUpload } from './upload.js';
 
 export interface ConversationSnapshot { cid: string; rid: string; rcid: string; }
-export interface GenerateRequest { prompt: string; model?: string; conversation?: ConversationSnapshot; }
+export interface GenerateRequest { prompt: string; model?: string; conversation?: ConversationSnapshot; attachments?: Array<{ url: string; name: string }>; }
 export interface StatefulGenerateRequest extends Omit<GenerateRequest,'conversation'> { conversation?: ConversationSnapshot | {snapshot():ConversationSnapshot;update(next:Partial<ConversationSnapshot>):void}; }
-export interface GeminiEvent { type: 'text' | 'thought' | 'phase' | 'session' | 'done' | 'error'; text?: string; session?: ConversationSnapshot; phase?: number; error?: Error; }
+export interface GeminiResource { kind: 'web_image' | 'generated_image' | 'generated_video'; url: string; name?: string; mimeType?: string; }
+export interface GeminiEvent { type: 'text' | 'thought' | 'phase' | 'session' | 'resource' | 'done' | 'error'; text?: string; session?: ConversationSnapshot; phase?: number; resource?: GeminiResource; error?: Error; }
 
 const APP = 'https://gemini.google.com/app';
 
@@ -22,7 +24,7 @@ export class GeminiClient {
     const html = await response.text();
     if (response.status !== 200) throw new GeminiProtocolError(`Gemini bootstrap returned HTTP ${response.status}`, response.status, response.status >= 500);
     const value = (pattern: RegExp) => { const match = html.match(pattern); return match?.slice(1).find(Boolean) ?? ''; };
-    const bootstrap = { snlM0e: value(/"SNlM0e":"([^"]+)"/), bl: value(/"bl":"([^"]+)"|data-bl="([^"]+)"/), fsid: value(/"FdrFJe":"([^"]+)"|"f\.sid":"([^"]+)"/), models: [] };
+    const bootstrap = { snlM0e: value(/"SNlM0e":"([^"]+)"/), bl: value(/"bl":"([^"]+)"|data-bl="([^"]+)"/), fsid: value(/"FdrFJe":"([^"]+)"|"f\.sid":"([^"]+)"/), pushId: value(/"qKIAYe":"([^"]+)"/), models: [] };
     if (!bootstrap.snlM0e || !bootstrap.bl || !bootstrap.fsid) throw new GeminiProtocolError('Gemini bootstrap is missing dynamic parameters', html.includes('accounts.google.com') ? 401 : undefined, false);
     const catalog = await this.fetchModels(bootstrap, signal);
     this.bootstrap = { ...bootstrap, models: catalog };
@@ -51,5 +53,11 @@ export class GeminiClient {
       for (const event of parser.push(chunk)) { if(state&&event.type==='session')state.update(event.session??{}); emit(event); }
     });
     for (const event of parser.finish()) { if(state&&event.type==='session')state.update(event.session??{}); emit(event); }
+  }
+
+  async upload(input: GeminiUpload, signal?: AbortSignal): Promise<{ url: string; name: string }> {
+    const bootstrap = this.bootstrap ?? await this.init(signal);
+    if (!bootstrap.pushId) throw new GeminiProtocolError('Gemini bootstrap has no upload push id', undefined, false);
+    return new GeminiUploadClient(this.transport, this.headers).upload(bootstrap.pushId, input, signal);
   }
 }

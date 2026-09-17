@@ -1,5 +1,5 @@
 export interface GeminiModel { name: string; displayName: string; description: string; hash: string; mode: number; capabilities: string[]; default: boolean; }
-export interface GeminiBootstrap { snlM0e: string; bl: string; fsid: string; models: GeminiModel[]; }
+export interface GeminiBootstrap { snlM0e: string; bl: string; fsid: string; pushId?: string; models: GeminiModel[]; }
 export function parseModelCatalog(payload: unknown): GeminiModel[] {
   if (!Array.isArray(payload) || !Array.isArray(payload[15])) return [];
   const models: GeminiModel[] = [];

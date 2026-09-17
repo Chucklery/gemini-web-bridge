@@ -25,7 +25,7 @@ export class GeminiRequestBuilder {
     const model = bootstrap.models.find((item) => item.name === request.model) ?? bootstrap.models.find(item => item.default) ?? bootstrap.models[0];
     const session = request.conversation ?? { cid: "", rid: "", rcid: "" };
     const payload: unknown[] = Array(PAYLOAD_SIZE).fill(null);
-    payload[PROMPT_INDEX] = [[request.prompt, 0, null, null, null, null, 0]];
+    payload[PROMPT_INDEX] = [[request.prompt, 0, null, request.attachments?.map(file => [file.url, file.name]) ?? null, null, null, 0]];
     payload[LANGUAGE_INDEX] = [this.language];
     payload[SESSION_INDEX] = [session.cid, session.rid, session.rcid, null, null, null, null, null, null, ""];
     payload[6] = [0]; payload[STREAMING_INDEX] = 1; payload[10] = 1; payload[11] = 0;
