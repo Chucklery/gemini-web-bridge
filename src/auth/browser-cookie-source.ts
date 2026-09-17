@@ -26,7 +26,9 @@ export class BrowserCookieSource implements CookieSource {
     const profile = await ensureProfilePath(this.options.accountId ?? 'default', this.options.profileRoot); const executable = discoverBrowser(this.options); let context: BrowserContext | undefined;
     try {
       const timeout = this.options.timeoutMs ?? 120000;
-      context = await openPersistentContext(profile, executable, this.options.headlessRecovery ?? true, timeout);
+      // Keep the default interactive. A headless Playwright context is commonly
+      // rejected by Google before the user can complete authentication.
+      context = await openPersistentContext(profile, executable, this.options.headlessRecovery ?? false, timeout);
       let page = context.pages()[0] ?? await prepareLogin(context, this.options.timeoutMs ?? 120000);
       let cookies = await exportGeminiCookies(context).catch(() => []);
       if (!cookies.some(cookie => cookie.name === 'SID')) {

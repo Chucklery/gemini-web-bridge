@@ -9,7 +9,9 @@ const schema = z.object({
   GEMINI_AUTH_TIMEOUT_MS: z.coerce.number().positive().default(120000),
   GEMINI_BROWSER_CHANNEL: z.enum(['auto', 'chrome', 'msedge']).default('auto'),
   GEMINI_BROWSER_EXECUTABLE_PATH: z.string().default(''),
-  GEMINI_BROWSER_HEADLESS_RECOVERY: z.coerce.boolean().default(true),
+  // Google may reject sign-in from automated/headless browser contexts.
+  // Recovery should therefore be visible and completed by the user by default.
+  GEMINI_BROWSER_HEADLESS_RECOVERY: z.coerce.boolean().default(false),
   GEMINI_AUTH_DATA_DIR: z.string().default(''),
   GEMINI_COOKIE_REFRESH_SKEW_MS: z.coerce.number().nonnegative().default(300000),
   GEMINI_SSE_HEARTBEAT_MS: z.coerce.number().positive().default(2000),
